@@ -71,6 +71,9 @@ model Business {
   plans         SubscriptionPlan[]
   subscriptionRequests SubscriptionRequest[]
   
+  isActive      Boolean  @default(true)
+  platformSubscriptions BusinessSubscription[]
+  
   // Settings fields
   qrScanEnabled    Boolean  @default(true)
   
@@ -222,4 +225,30 @@ model SubscriptionRequest {
   user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   business      Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
   plan          SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+}
+
+model BusinessPlan {
+  id            String   @id @default(uuid())
+  name          String
+  price         Float
+  validityDays  Int
+  type          String   @default("REGULAR") // REGULAR, DEFAULT
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  subscriptions BusinessSubscription[]
+}
+
+model BusinessSubscription {
+  id          String   @id @default(uuid())
+  businessId  String
+  planId      String
+  status      String   @default("ACTIVE") // ACTIVE, EXPIRED, INACTIVE
+  startDate   DateTime @default(now())
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  plan        BusinessPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
 }

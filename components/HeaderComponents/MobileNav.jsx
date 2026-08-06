@@ -11,9 +11,10 @@ import { Show, SignInButton } from '@clerk/nextjs';
 
 const navItems = [
   { label: 'Home', href: '/' },
-  { label: 'Features', href: '/features' },
-  { label: 'Pricing', href: '/pricing' },
+  { label: 'Find Mess', href: '/find-mess' },
+  { label: 'About', href: '/about' },
   { label: 'Contact', href: '/contact' },
+  { label: 'How to use', href: '/how-to-use' },
 ];
 
 const MobileNav = () => {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { registerCustomerProfile } from "@/actions/user";
 import { getApprovedBusinesses } from "@/actions/business";
 import { Button } from "@/components/ui/button";
@@ -12,13 +12,16 @@ import { UserCheck } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
-export default function CustomerRegisterPage() {
+function CustomerRegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const messIdParam = searchParams.get("messId") || "";
   const { user: clerkUser, isLoaded } = useUser();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [businesses, setBusinesses] = useState([]);
   const [fetchingMesses, setFetchingMesses] = useState(true);
+  const [selectedMessId, setSelectedMessId] = useState("");
 
   useEffect(() => {
     async function loadMesses() {
@@ -38,6 +41,12 @@ export default function CustomerRegisterPage() {
     loadMesses();
   }, []);
 
+  useEffect(() => {
+    if (messIdParam) {
+      setSelectedMessId(messIdParam);
+    }
+  }, [messIdParam]);
+
   if (!isLoaded) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-muted/30">
@@ -55,7 +64,7 @@ export default function CustomerRegisterPage() {
     const data = {
       name: formData.get("name"),
       phone: formData.get("phone"),
-      messId: formData.get("messId"),
+      messId: selectedMessId,
       requestedPlan: formData.get("requestedPlan"),
     };
 
@@ -136,6 +145,8 @@ export default function CustomerRegisterPage() {
                   id="messId"
                   name="messId"
                   required
+                  value={selectedMessId}
+                  onChange={(e) => setSelectedMessId(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <option value="">-- Choose Mess --</option>
@@ -179,5 +190,17 @@ export default function CustomerRegisterPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function CustomerRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-muted/30">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      </div>
+    }>
+      <CustomerRegisterForm />
+    </Suspense>
   );
 }

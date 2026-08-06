@@ -256,6 +256,9 @@ export async function recordCustomerSelfCheckIn(qrPayload) {
       where: { id: user.businessId }
     });
     if (!business) throw new Error("Registered mess not found.");
+    if (business.isActive === false) {
+      throw new Error("This mess has been deactivated. Please contact your mess manager.");
+    }
     if (business.uniqueId !== uniqueId) {
       throw new Error("This QR belongs to a different mess. You cannot check in here.");
     }

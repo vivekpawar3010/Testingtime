@@ -32,17 +32,15 @@ export default async function SuperAdminLayout({ children }) {
             <ClipboardList className="h-5 w-5" />
             All Messes
           </Link>
+          <Link href="/super-admin/settings" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground hover:bg-muted">
+            <Settings className="h-5 w-5" />
+            Subscription Plans
+          </Link>
           <Link href="/super-admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground hover:bg-muted">
             <Users className="h-5 w-5" />
             All Users
           </Link>
         </nav>
-        <div className="p-4 border-t">
-           <Link href="/super-admin/settings" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground hover:bg-muted">
-            <Settings className="h-5 w-5" />
-            Settings
-          </Link>
-        </div>
       </aside>
 
       {/* Main Content */}

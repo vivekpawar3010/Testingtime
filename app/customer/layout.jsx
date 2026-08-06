@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Header from "@/components/HeaderComponents/Header";
 import Link from "next/link";
 import { LayoutDashboard, Utensils, History, Receipt, Home, Scan, Package } from "lucide-react";
+import { db } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,15 @@ export default async function CustomerLayout({ children }) {
 
   if (user.role !== "CUSTOMER") {
     redirect(user.role === "SUPER_ADMIN" ? "/super-admin" : "/dashboard");
+  }
+
+  if (user.businessId) {
+    const business = await db.business.findUnique({
+      where: { id: user.businessId }
+    });
+    if (business && business.isActive === false) {
+      redirect("/deactivated");
+    }
   }
 
   if (user.status === "PENDING" && user.businessId) {

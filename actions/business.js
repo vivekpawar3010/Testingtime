@@ -57,6 +57,26 @@ export async function approveBusiness(businessId, uniqueId) {
       data: { status: "ACTIVE" }
     });
 
+    // Check and auto-assign DEFAULT platform plan
+    const defaultPlan = await db.businessPlan.findFirst({
+      where: { type: "DEFAULT" }
+    });
+
+    if (defaultPlan) {
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + defaultPlan.validityDays);
+
+      await db.businessSubscription.create({
+        data: {
+          businessId: updatedBusiness.id,
+          planId: defaultPlan.id,
+          status: "ACTIVE",
+          startDate: new Date(),
+          endDate
+        }
+      });
+    }
+
     revalidatePath("/super-admin/requests");
     return { success: true };
   } catch (error) {
