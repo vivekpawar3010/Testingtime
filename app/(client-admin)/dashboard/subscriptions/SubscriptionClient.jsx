@@ -24,6 +24,16 @@ export default function SubscriptionClient({ initialPlans, activeCustomers, pend
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("plans");
 
+  const [reqPage, setReqPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  useEffect(() => {
+    setReqPage(1);
+  }, [pendingRequestsList]);
+
+  const paginatedRequests = pendingRequestsList.slice((reqPage - 1) * itemsPerPage, reqPage * itemsPerPage);
+  const totalReqPages = Math.ceil(pendingRequestsList.length / itemsPerPage);
+
   // Create Plan Form States
   const [planName, setPlanName] = useState("");
   const [mealCount, setMealCount] = useState(56);
@@ -525,61 +535,80 @@ export default function SubscriptionClient({ initialPlans, activeCustomers, pend
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
-              {pendingRequestsList.map((req) => (
-                <Card key={req.id} className="shadow-md border-l-4 border-l-amber-500 bg-card">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg font-bold text-foreground">{req.user.name || req.user.email}</CardTitle>
-                        <CardDescription className="text-xs">{req.user.email}</CardDescription>
+            <div className="space-y-4">
+              <div className="grid gap-6 md:grid-cols-2">
+                {paginatedRequests.map((req) => (
+                  <Card key={req.id} className="shadow-md border-l-4 border-l-amber-500 bg-card">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-lg font-bold text-foreground">{req.user.name || req.user.email}</CardTitle>
+                          <CardDescription className="text-xs">{req.user.email}</CardDescription>
+                        </div>
+                        <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-extrabold text-amber-700">
+                          PENDING REVIEW
+                        </span>
                       </div>
-                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-extrabold text-amber-700">
-                        PENDING REVIEW
-                      </span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3 pt-2 text-xs">
-                    <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-3 text-xs flex justify-between items-center">
-                      <span className="font-semibold text-indigo-950">Requested Plan:</span>
-                      <span className="font-bold text-indigo-700">{req.plan.name}</span>
-                    </div>
-                    <div className="space-y-1.5 font-semibold text-neutral-700">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Meals Count:</span>
-                        <span>{req.plan.mealCount} Meals</span>
+                    </CardHeader>
+                    <CardContent className="space-y-3 pt-2 text-xs">
+                      <div className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-3 text-xs flex justify-between items-center">
+                        <span className="font-semibold text-indigo-950">Requested Plan:</span>
+                        <span className="font-bold text-indigo-700">{req.plan.name}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total Price:</span>
-                        <span>₹{req.plan.totalAmount}</span>
+                      <div className="space-y-1.5 font-semibold text-neutral-700">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Meals Count:</span>
+                          <span>{req.plan.mealCount} Meals</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Total Price:</span>
+                          <span>₹{req.plan.totalAmount}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Validity Limit:</span>
+                          <span>{req.plan.validityDays} Days</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Validity Limit:</span>
-                        <span>{req.plan.validityDays} Days</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter className="pt-2 border-t flex justify-end gap-2 px-6">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-xs font-bold hover:bg-red-50 hover:text-red-700 border-neutral-200 cursor-pointer"
-                      onClick={() => handleRejectRequest(req.id)}
-                      disabled={loading}
-                    >
-                      Decline
+                    </CardContent>
+                    <CardFooter className="pt-2 border-t flex justify-end gap-2 px-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs font-bold hover:bg-red-50 hover:text-red-700 border-neutral-200 cursor-pointer"
+                        onClick={() => handleRejectRequest(req.id)}
+                        disabled={loading}
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer border-none shadow-md shadow-indigo-100"
+                        onClick={() => handleApproveRequest(req.id)}
+                        disabled={loading}
+                      >
+                        Approve & Activate
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Requests Pagination Controls */}
+              {totalReqPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                  <span className="text-muted-foreground">
+                    Showing request reviews {((reqPage - 1) * itemsPerPage) + 1} to {Math.min(reqPage * itemsPerPage, pendingRequestsList.length)} of {pendingRequestsList.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled={reqPage <= 1} onClick={() => setReqPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Previous
                     </Button>
-                    <Button
-                      size="sm"
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold cursor-pointer border-none shadow-md shadow-indigo-100"
-                      onClick={() => handleApproveRequest(req.id)}
-                      disabled={loading}
-                    >
-                      Approve & Activate
+                    <Button variant="outline" size="sm" disabled={reqPage >= totalReqPages} onClick={() => setReqPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Next
                     </Button>
-                  </CardFooter>
-                </Card>
-              ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </TabsContent>

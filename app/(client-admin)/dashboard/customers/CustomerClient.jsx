@@ -71,9 +71,22 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
     }
   };
 
+  const [activePage, setActivePage] = useState(1);
+  const [pendingPage, setPendingPage] = useState(1);
+  const [suspendedPage, setSuspendedPage] = useState(1);
+  const itemsPerPage = 10;
+
   const activeUsers = customers.filter(c => c.status === "ACTIVE");
+  const paginatedActiveUsers = activeUsers.slice((activePage - 1) * itemsPerPage, activePage * itemsPerPage);
+  const totalActivePages = Math.ceil(activeUsers.length / itemsPerPage);
+
   const pendingUsers = customers.filter(c => c.status === "PENDING");
+  const paginatedPendingUsers = pendingUsers.slice((pendingPage - 1) * itemsPerPage, pendingPage * itemsPerPage);
+  const totalPendingPages = Math.ceil(pendingUsers.length / itemsPerPage);
+
   const suspendedUsers = customers.filter(c => c.status === "SUSPENDED" || c.status === "EXPIRED");
+  const paginatedSuspendedUsers = suspendedUsers.slice((suspendedPage - 1) * itemsPerPage, suspendedPage * itemsPerPage);
+  const totalSuspendedPages = Math.ceil(suspendedUsers.length / itemsPerPage);
 
   // Pre-fill subscription details based on selected requestedPlan
   const handleOpenApproveModal = (customer) => {
@@ -271,8 +284,9 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
               {activeUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No active customers found.</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
@@ -283,7 +297,7 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {activeUsers.map((cust) => {
+                      {paginatedActiveUsers.map((cust) => {
                         const activeSub = cust.subscriptions?.[0];
                         const remaining = activeSub ? (activeSub.mealCount - activeSub.usedMeals) : 0;
                         const total = activeSub ? activeSub.mealCount : 0;
@@ -293,25 +307,44 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                           <TableRow key={cust.id}>
                             <TableCell className="font-semibold">{cust.name || "N/A"}</TableCell>
                             <TableCell>
+                              <div className="text-sm font-medium">{cust.phone || "N/A"}</div>
                               <div className="text-xs text-muted-foreground">{cust.email}</div>
-                              <div className="text-xs text-foreground font-medium">{cust.phone || "No Phone"}</div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-sm font-bold">
-                                  {remaining} / {total}
-                                </span>
-                                <span className="text-xs text-muted-foreground">remaining</span>
-                              </div>
+                              {activeSub ? (
+                                <div className="space-y-1">
+                                  <div className="text-xs font-semibold text-indigo-950">{activeSub.planName || "Active Plan"}</div>
+                                  <div className="text-[10px] text-muted-foreground">Expires: {activeSub.endDate ? new Date(activeSub.endDate).toLocaleDateString() : "Never"}</div>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No active plan</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {activeSub ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="w-24 bg-neutral-100 rounded-full h-2 overflow-hidden border">
+                                    <div 
+                                      className={`h-full ${remaining <= activeSub.reminderCount ? "bg-amber-500" : "bg-indigo-600"}`} 
+                                      style={{ width: `${Math.min(100, (remaining / total) * 100)}%` }} 
+                                    />
+                                  </div>
+                                  <span className="font-mono font-bold text-xs text-indigo-950">
+                                    {remaining} / {total}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">-</span>
+                              )}
                             </TableCell>
                             <TableCell>
                               {latestBill ? (
-                                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                                   latestBill.status === "PAID" 
-                                    ? "bg-green-50 text-green-700" 
+                                    ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
                                     : latestBill.status === "PARTIAL" 
-                                    ? "bg-amber-50 text-amber-700" 
-                                    : "bg-red-50 text-red-700"
+                                    ? "bg-amber-50 text-amber-700 border-amber-100" 
+                                    : "bg-red-50 text-red-700 border-red-100"
                                 }`}>
                                   {latestBill.status}
                                 </span>
@@ -345,6 +378,23 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Pagination Controls */}
+                {totalActivePages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                    <span className="text-muted-foreground">
+                      Showing active diners {((activePage - 1) * itemsPerPage) + 1} to {Math.min(activePage * itemsPerPage, activeUsers.length)} of {activeUsers.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled={activePage <= 1} onClick={() => setActivePage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Previous
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={activePage >= totalActivePages} onClick={() => setActivePage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -361,8 +411,9 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
               {pendingUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No pending registration requests.</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Customer Info</TableHead>
@@ -372,7 +423,7 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {pendingUsers.map((cust) => (
+                      {paginatedPendingUsers.map((cust) => (
                         <TableRow key={cust.id}>
                           <TableCell className="font-semibold">{cust.name || "N/A"}</TableCell>
                           <TableCell className="font-semibold text-indigo-600">{cust.requestedPlan || "Basic (30 Meals)"}</TableCell>
@@ -404,6 +455,23 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Pending Pagination Controls */}
+                {totalPendingPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                    <span className="text-muted-foreground">
+                      Showing pending requests {((pendingPage - 1) * itemsPerPage) + 1} to {Math.min(pendingPage * itemsPerPage, pendingUsers.length)} of {pendingUsers.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled={pendingPage <= 1} onClick={() => setPendingPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Previous
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={pendingPage >= totalPendingPages} onClick={() => setPendingPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -420,8 +488,9 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
               {suspendedUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">No suspended customers found.</div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Name</TableHead>
@@ -431,7 +500,7 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {suspendedUsers.map((cust) => (
+                      {paginatedSuspendedUsers.map((cust) => (
                         <TableRow key={cust.id}>
                           <TableCell className="font-semibold text-muted-foreground">{cust.name}</TableCell>
                           <TableCell>
@@ -468,6 +537,23 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                     </TableBody>
                   </Table>
                 </div>
+                {/* Suspended Pagination Controls */}
+                {totalSuspendedPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                    <span className="text-muted-foreground">
+                      Showing suspended diners {((suspendedPage - 1) * itemsPerPage) + 1} to {Math.min(suspendedPage * itemsPerPage, suspendedUsers.length)} of {suspendedUsers.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled={suspendedPage <= 1} onClick={() => setSuspendedPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Previous
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={suspendedPage >= totalSuspendedPages} onClick={() => setSuspendedPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>

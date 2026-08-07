@@ -11,6 +11,12 @@ export default function BillingClient({ initialBills, businessSettings }) {
   const [bills, setBills] = useState(initialBills);
   const [selectedBillForPrint, setSelectedBillForPrint] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const paginatedBills = bills.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const totalPages = Math.ceil(bills.length / itemsPerPage);
+
   return (
     <div className="space-y-6">
       <div>
@@ -31,54 +37,73 @@ export default function BillingClient({ initialBills, businessSettings }) {
               <p className="text-muted-foreground text-sm">Your bills will appear here once assigned by the Mess Owner.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Charge Amount</TableHead>
-                    <TableHead>Amount Paid</TableHead>
-                    <TableHead>Due Balance</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {bills.map((bill) => (
-                    <TableRow key={bill.id}>
-                      <TableCell className="font-mono font-bold text-indigo-600">{bill.invoiceNumber}</TableCell>
-                      <TableCell className="font-semibold">₹{bill.totalAmount}</TableCell>
-                      <TableCell className="text-emerald-600 font-semibold">₹{bill.paidAmount}</TableCell>
-                      <TableCell className="text-amber-600 font-semibold">₹{bill.remainingAmount}</TableCell>
-                      <TableCell className="text-xs">
-                        {bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : "N/A"}
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          bill.status === "PAID" 
-                            ? "bg-green-50 text-green-700" 
-                            : bill.status === "PARTIAL" 
-                            ? "bg-amber-50 text-amber-700" 
-                            : "bg-red-50 text-red-700"
-                        }`}>
-                          {bill.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                          onClick={() => setSelectedBillForPrint(bill)}
-                        >
-                          <FileText className="h-4 w-4 mr-1" /> View Invoice
-                        </Button>
-                      </TableCell>
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Total Price</TableHead>
+                      <TableHead>Amount Paid</TableHead>
+                      <TableHead>Due Balance</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedBills.map((bill) => (
+                      <TableRow key={bill.id}>
+                        <TableCell className="font-mono font-bold text-indigo-600">{bill.invoiceNumber}</TableCell>
+                        <TableCell className="font-semibold">₹{bill.totalAmount}</TableCell>
+                        <TableCell className="text-emerald-600 font-semibold">₹{bill.paidAmount}</TableCell>
+                        <TableCell className="text-amber-600 font-semibold">₹{bill.remainingAmount}</TableCell>
+                        <TableCell className="text-xs">
+                          {bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : "N/A"}
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            bill.status === "PAID" 
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
+                              : bill.status === "PARTIAL" 
+                              ? "bg-amber-50 text-amber-700 border-amber-100" 
+                              : "bg-red-50 text-red-700 border-red-100"
+                          }`}>
+                            {bill.status}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                            onClick={() => setSelectedBillForPrint(bill)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" /> View Invoice
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Invoices Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                  <span className="text-muted-foreground">
+                    Showing invoices {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, bills.length)} of {bills.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Previous
+                    </Button>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

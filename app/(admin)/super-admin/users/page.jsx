@@ -15,8 +15,9 @@ export default async function SuperAdminUsersPage({ searchParams }) {
   }
 
   // Parse page
-  const page = parseInt(await searchParams?.page) || 1;
-  const limit = 20;
+  const params = await searchParams;
+  const page = parseInt(params?.page) || 1;
+  const limit = 10;
   const skip = (page - 1) * limit;
 
   // Retrieve total count

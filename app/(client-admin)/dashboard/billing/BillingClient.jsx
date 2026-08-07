@@ -17,6 +17,16 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
   const [activeTab, setActiveTab] = useState("invoices");
   const [loading, setLoading] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  useEffect(() => {
+    setPage(1);
+  }, [bills]);
+
+  const paginatedBills = bills.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const totalPages = Math.ceil(bills.length / itemsPerPage);
+
   // Default parameters from settings
   const defaultGstRate = businessSettings?.defaultGst || 0;
   const defaultDueDays = businessSettings?.invoiceDueDays || 7;
@@ -151,8 +161,9 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                   <p className="text-muted-foreground text-sm">Create a custom bill or assign a subscription to generate invoices.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <Table>
+                <>
+                  <div className="overflow-x-auto">
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Invoice #</TableHead>
@@ -165,7 +176,7 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {bills.map((bill) => (
+                      {paginatedBills.map((bill) => (
                         <TableRow key={bill.id}>
                           <TableCell className="font-mono font-bold text-indigo-600">{bill.invoiceNumber}</TableCell>
                           <TableCell>
@@ -177,16 +188,16 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                             <div className="text-xs font-semibold text-emerald-600">Paid: ₹{bill.paidAmount}</div>
                             <div className="text-[10px] text-amber-600">Remaining: ₹{bill.remainingAmount}</div>
                           </TableCell>
-                          <TableCell className="text-xs">
-                            {bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : "N/A"}
+                          <TableCell className="text-xs font-medium">
+                            {new Date(bill.dueDate).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                               bill.status === "PAID" 
-                                ? "bg-green-50 text-green-700" 
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-100" 
                                 : bill.status === "PARTIAL" 
-                                ? "bg-amber-50 text-amber-700" 
-                                : "bg-red-50 text-red-700"
+                                ? "bg-amber-50 text-amber-700 border-amber-100" 
+                                : "bg-red-50 text-red-700 border-red-100"
                             }`}>
                               {bill.status}
                             </span>
@@ -196,12 +207,17 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                               variant="outline" 
                               size="sm" 
                               className="h-8 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
-                              onClick={() => setSelectedBillForPrint(bill)}
+                              onClick={() => {
+                                setSelectedBillForPrint(bill);
+                                setIsPrintOpen(true);
+                              }}
+                              disabled={loading}
                             >
-                              <FileText className="h-4 w-4" /> Invoice
+                              Invoice
                             </Button>
                             {bill.status !== "PAID" && (
                               <Button 
+                                variant="default" 
                                 size="sm" 
                                 className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
                                 onClick={() => handleOpenPaymentModal(bill)}
@@ -216,6 +232,23 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                     </TableBody>
                   </Table>
                 </div>
+                {/* Invoices Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t text-xs">
+                    <span className="text-muted-foreground">
+                      Showing invoices {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, bills.length)} of {bills.length}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Previous
+                      </Button>
+                      <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
             </CardContent>
           </Card>

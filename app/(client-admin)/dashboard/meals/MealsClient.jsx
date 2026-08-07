@@ -9,6 +9,7 @@ import { History, Search, Calendar } from "lucide-react";
 
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 export default function MealsClient({ initialLogs, filteredDate }) {
   const router = useRouter();
@@ -28,6 +29,13 @@ export default function MealsClient({ initialLogs, filteredDate }) {
     }
   };
 
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, mealFilter, selectedDate]);
+
   const filteredLogs = initialLogs.filter((log) => {
     const name = (log.user.name || "").toLowerCase();
     const email = (log.user.email || "").toLowerCase();
@@ -38,6 +46,9 @@ export default function MealsClient({ initialLogs, filteredDate }) {
     
     return matchesSearch && matchesFilter;
   });
+
+  const paginatedLogs = filteredLogs.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
 
   return (
     <div className="space-y-6">
@@ -96,46 +107,65 @@ export default function MealsClient({ initialLogs, filteredDate }) {
               <p className="text-muted-foreground text-sm">No meal logs match your search criteria.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Diner Name</TableHead>
-                    <TableHead>Email Reference</TableHead>
-                    <TableHead>Meal Type</TableHead>
-                    <TableHead>Check-in Date</TableHead>
-                    <TableHead>Check-in Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((log) => {
-                    const dateObj = new Date(log.createdAt);
-                    return (
-                      <TableRow key={log.id}>
-                        <TableCell className="font-semibold text-foreground">{log.user.name || "N/A"}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{log.user.email}</TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            log.mealType === "BREAKFAST" 
-                              ? "bg-amber-50 text-amber-700" 
-                              : log.mealType === "LUNCH" 
-                              ? "bg-indigo-50 text-indigo-700" 
-                              : "bg-orange-50 text-orange-700"
-                          }`}>
-                            {log.mealType}
-                          </span>
-                        </TableCell>
-                         <TableCell className="text-xs text-foreground font-medium">
-                          {dateObj.toLocaleDateString("en-US", { timeZone: "Asia/Kolkata" })}
-                        </TableCell>
-                        <TableCell className="text-xs font-mono text-muted-foreground">
-                          {dateObj.toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+            <div className="space-y-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Diner Name</TableHead>
+                      <TableHead>Email Reference</TableHead>
+                      <TableHead>Meal Type</TableHead>
+                      <TableHead>Check-in Date</TableHead>
+                      <TableHead>Check-in Time</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedLogs.map((log) => {
+                      const dateObj = new Date(log.createdAt);
+                      return (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-semibold text-foreground">{log.user.name || "N/A"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{log.user.email}</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              log.mealType === "BREAKFAST" 
+                                ? "bg-amber-50 text-amber-700" 
+                                : log.mealType === "LUNCH" 
+                                ? "bg-indigo-50 text-indigo-700" 
+                                : "bg-orange-50 text-orange-700"
+                            }`}>
+                              {log.mealType}
+                            </span>
+                          </TableCell>
+                           <TableCell className="text-xs text-foreground font-medium">
+                            {dateObj.toLocaleDateString("en-US", { timeZone: "Asia/Kolkata" })}
+                          </TableCell>
+                          <TableCell className="text-xs font-mono text-muted-foreground">
+                            {dateObj.toLocaleTimeString("en-US", { timeZone: "Asia/Kolkata", hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Attendance Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t text-xs">
+                  <span className="text-muted-foreground">
+                    Showing attendance logs {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, filteredLogs.length)} of {filteredLogs.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Previous
+                    </Button>
+                    <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} className="rounded-xl h-8 text-[11px] font-bold">
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
