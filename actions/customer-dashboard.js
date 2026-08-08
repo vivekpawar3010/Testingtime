@@ -21,7 +21,8 @@ export async function getCustomerDashboardData() {
         userId: user.id,
         businessId: business.id,
         status: "ACTIVE"
-      }
+      },
+      orderBy: { createdAt: "desc" }
     });
 
     // Fetch recent meal logs (last 5)

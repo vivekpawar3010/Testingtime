@@ -99,7 +99,8 @@ export async function recordMealAttendance(customerIdOrClerkId, selectedMealType
         userId: diner.id,
         businessId: business.id,
         status: "ACTIVE"
-      }
+      },
+      orderBy: { createdAt: "desc" }
     });
 
     if (!subscription) {
@@ -327,7 +328,8 @@ export async function recordCustomerSelfCheckIn(qrPayload) {
 
     // Check customer subscription
     const subscription = await db.subscription.findFirst({
-      where: { userId: user.id, businessId: business.id, status: "ACTIVE" }
+      where: { userId: user.id, businessId: business.id, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" }
     });
     if (!subscription) {
       throw new Error("No active subscription plan found. Please contact admin to renew.");

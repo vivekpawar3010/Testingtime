@@ -4,6 +4,26 @@ import { db } from "@/lib/prisma";
 import { checkUser } from "@/lib/checkUser";
 import { revalidatePath } from "next/cache";
 
+export async function generateUniqueInvoiceNumber() {
+  let isUnique = false;
+  let invoiceNumber = "";
+  
+  while (!isUnique) {
+    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, ""); // YYYYMMDD
+    const randomStr = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+    invoiceNumber = `INV-${dateStr}-${randomStr}`;
+    
+    const existing = await db.bill.findUnique({
+      where: { invoiceNumber }
+    });
+    if (!existing) {
+      isUnique = true;
+    }
+  }
+  
+  return invoiceNumber;
+}
+
 export async function getBusinessBills() {
   try {
     const user = await checkUser();
@@ -47,8 +67,7 @@ export async function createCustomBill(data) {
 
     const totalAmount = baseAmount + extraCharges + gst - discount;
 
-    const billCount = await db.bill.count();
-    const invoiceNumber = `INV-${1000 + billCount + 1}`;
+    const invoiceNumber = await generateUniqueInvoiceNumber();
 
     const bill = await db.bill.create({
       data: {

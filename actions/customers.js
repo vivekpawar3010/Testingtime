@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma";
 import { checkUser } from "@/lib/checkUser";
 import { revalidatePath } from "next/cache";
+import { generateUniqueInvoiceNumber } from "./billing";
 
 export async function getBusinessCustomers() {
   try {
@@ -35,7 +36,7 @@ export async function getBusinessCustomers() {
   }
 }
 
-export async function approveCustomerRegistration(customerId, subData) {
+export async function approveCustomerRegistration(customerId) {
   try {
     const user = await checkUser();
     if (!user || user.role !== "CLIENT_ADMIN") throw new Error("Unauthorized");
@@ -51,52 +52,12 @@ export async function approveCustomerRegistration(customerId, subData) {
       data: { status: "ACTIVE" }
     });
 
-    // 2. Create subscription
-    const mealCount = parseInt(subData.mealCount);
-    const mealPrice = parseFloat(subData.mealPrice);
-    const totalAmount = mealCount * mealPrice;
-    const validityDays = parseInt(subData.validityDays);
-
-    const subscription = await db.subscription.create({
-      data: {
-        userId: customerId,
-        businessId: business.id,
-        mealCount,
-        usedMeals: 0,
-        mealPrice,
-        totalAmount,
-        validityDays,
-        reminderCount: parseInt(subData.reminderCount || 2),
-        status: "ACTIVE"
-      }
-    });
-
-    // 3. Generate invoice
-    const billCount = await db.bill.count();
-    const invoiceNumber = `INV-${1000 + billCount + 1}`;
-
-    await db.bill.create({
-      data: {
-        invoiceNumber,
-        userId: customerId,
-        businessId: business.id,
-        totalAmount,
-        paidAmount: 0,
-        remainingAmount: totalAmount,
-        discount: 0,
-        extraCharges: 0,
-        gst: 0,
-        status: "UNPAID",
-        dueDate: new Date(Date.now() + (business.invoiceDueDays || 7) * 24 * 60 * 60 * 1000) // custom buffer from settings
-      }
-    });
-
-    // 4. Create welcome notification
+    // 2. Create welcome notification
     await db.notification.create({
       data: {
         userId: customerId,
         type: "SYSTEM",
-        message: `Welcome to ${business.name}! Your account has been approved and your ${mealCount}-meal package is active.`,
+        message: `Welcome to ${business.name}! Your registration request has been approved. You can now request subscription plans from your plans portal.`,
         status: "UNREAD"
       }
     });
@@ -177,7 +138,8 @@ export async function deleteCustomer(customerId) {
       data: {
         businessId: null,
         status: "PENDING",
-        role: "CLIENT_ADMIN" // reset role so they can onboarding choose again
+        role: "CUSTOMER",
+        requestedPlan: null
       }
     });
 
@@ -202,6 +164,37 @@ export async function manuallyAddCustomer(customerData, subData) {
     let targetUser = await db.user.findUnique({
       where: { email: customerData.email }
     });
+
+    if (targetUser) {
+      // 1. Check if they are a mess owner or admin
+      const existingBiz = await db.business.findUnique({
+        where: { ownerId: targetUser.id }
+      });
+      if (targetUser.role === "CLIENT_ADMIN" || targetUser.role === "SUPER_ADMIN" || existingBiz) {
+        throw new Error("This email is registered to a mess owner or platform administrator. They cannot be added as a customer.");
+      }
+
+      // 2. Check if they are locked to a different mess
+      if (targetUser.businessId && targetUser.businessId !== business.id) {
+        if (targetUser.status === "PENDING") {
+          throw new Error("This customer already has a pending registration request at another mess.");
+        }
+        if (targetUser.status === "ACTIVE") {
+          const activeSub = await db.subscription.findFirst({
+            where: {
+              userId: targetUser.id,
+              businessId: targetUser.businessId,
+              status: "ACTIVE"
+            },
+            orderBy: { createdAt: "desc" }
+          });
+          if (activeSub && activeSub.usedMeals < activeSub.mealCount) {
+            const remaining = activeSub.mealCount - activeSub.usedMeals;
+            throw new Error(`This customer cannot be added because they still have ${remaining} active meal tokens at another mess.`);
+          }
+        }
+      }
+    }
 
     if (!targetUser) {
       // Create user record (clerkUserId is generated as a mock since they don't have Clerk account yet)
@@ -250,8 +243,7 @@ export async function manuallyAddCustomer(customerData, subData) {
     });
 
     // Generate Invoice
-    const billCount = await db.bill.count();
-    const invoiceNumber = `INV-${1000 + billCount + 1}`;
+    const invoiceNumber = await generateUniqueInvoiceNumber();
 
     await db.bill.create({
       data: {

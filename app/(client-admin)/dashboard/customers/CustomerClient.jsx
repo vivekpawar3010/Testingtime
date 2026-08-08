@@ -113,12 +113,7 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
     if (!selectedApprovee) return;
     setLoading(true);
     try {
-      const res = await approveCustomerRegistration(selectedApprovee.id, {
-        mealCount,
-        mealPrice,
-        validityDays,
-        reminderCount
-      });
+      const res = await approveCustomerRegistration(selectedApprovee.id);
 
       if (res.success) {
         toast.success(`Approved ${selectedApprovee.name || selectedApprovee.email} successfully!`);
@@ -717,79 +712,14 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
           <DialogHeader>
             <DialogTitle>Approve Diner Registration</DialogTitle>
             <DialogDescription>
-              Assign a subscription plan and generate an invoice for **{selectedApprovee?.name || selectedApprovee?.email}**.
+              Are you sure you want to approve **{selectedApprovee?.name || selectedApprovee?.email}**?
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="rounded-lg bg-indigo-50 p-3 text-xs text-indigo-800 font-medium">
-              Requested Plan: <span className="font-bold underline">{selectedApprovee?.requestedPlan || "Basic (30 Meals)"}</span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="modal-meals">Meal Count</Label>
-                <Input 
-                  id="modal-meals" 
-                  type="number" 
-                  value={mealCount} 
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setMealCount(val);
-                  }} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="modal-price">Price Per Meal (₹)</Label>
-                <Input 
-                  id="modal-price" 
-                  type="number" 
-                  step="0.01" 
-                  value={mealPrice} 
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    setMealPrice(val);
-                  }} 
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="modal-validity">Validity (Days)</Label>
-                <Input 
-                  id="modal-validity" 
-                  type="number" 
-                  value={validityDays} 
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setValidityDays(val);
-                  }} 
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="modal-reminder">Low Meal Warning Threshold</Label>
-                <Input 
-                  id="modal-reminder" 
-                  type="number" 
-                  value={reminderCount} 
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    setReminderCount(val);
-                  }} 
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border bg-muted/30 p-3 text-xs">
-              <div className="flex justify-between font-semibold">
-                <span>Total Invoice Amount:</span>
-                <span className="text-indigo-600 text-sm">₹{(mealCount * mealPrice).toFixed(2)}</span>
-              </div>
-              <p className="text-muted-foreground mt-1 text-[10px]">
-                This will generate an UNPAID invoice. Diner can view and pay this upon approval.
-              </p>
-            </div>
+          <div className="space-y-4 py-2 text-xs text-muted-foreground">
+            <p>
+              This will approve their request to join your mess. Once approved, you can assign them a subscription plan from your Subscriptions console, or they can request a renewal package from their client dashboard.
+            </p>
           </div>
 
           <DialogFooter className="sm:justify-end gap-2">
@@ -797,7 +727,7 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
               Cancel
             </Button>
             <Button className="bg-green-600 hover:bg-green-700 text-white font-medium" onClick={handleApprove} disabled={loading}>
-              {loading ? "Approving..." : "Confirm & Approve"}
+              {loading ? "Approving..." : "Yes, Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>

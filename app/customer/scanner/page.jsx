@@ -35,7 +35,8 @@ export default async function CustomerScannerPage() {
     const differenceMins = (Date.now() - new Date(latestLog.createdAt).getTime()) / (1000 * 60);
     if (differenceMins < passDurationMins) {
       const subscription = await db.subscription.findFirst({
-        where: { userId: user.id, businessId: business.id, status: "ACTIVE" }
+        where: { userId: user.id, businessId: business.id, status: "ACTIVE" },
+        orderBy: { createdAt: "desc" }
       });
 
       activeDinePass = {

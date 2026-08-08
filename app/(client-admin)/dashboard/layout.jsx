@@ -75,11 +75,9 @@ export default function DashboardLayout({ children }) {
       {/* Mobile Drawer Navigation */}
       <div className="flex items-center border-b bg-card px-4 py-3 md:hidden">
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <button className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "mr-2")}>
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle Menu</span>
-            </button>
+          <SheetTrigger className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "mr-2")}>
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle Menu</span>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <div className="flex h-full flex-col py-6 px-4">

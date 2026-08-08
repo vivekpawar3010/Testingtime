@@ -3,6 +3,7 @@
 import { db } from "@/lib/prisma";
 import { checkUser } from "@/lib/checkUser";
 import { revalidatePath } from "next/cache";
+import { generateUniqueInvoiceNumber } from "./billing";
 
 export async function getSubscriptionPlans() {
   try {
@@ -87,7 +88,8 @@ export async function assignSubscriptionToCustomer(customerId, planDetails) {
 
     // Fetch customer's current active subscription
     const activeSub = await db.subscription.findFirst({
-      where: { userId: customerId, businessId: business.id, status: "ACTIVE" }
+      where: { userId: customerId, businessId: business.id, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" }
     });
 
     let carryOverMeals = 0;
@@ -129,8 +131,7 @@ export async function assignSubscriptionToCustomer(customerId, planDetails) {
     });
 
     // Generate Bill
-    const billCount = await db.bill.count();
-    const invoiceNumber = `INV-${1000 + billCount + 1}`;
+    const invoiceNumber = await generateUniqueInvoiceNumber();
 
     await db.bill.create({
       data: {
@@ -189,7 +190,8 @@ export async function requestSubscriptionPlan(planId) {
 
     // Check if customer has an active subscription above the alert threshold
     const activeSub = await db.subscription.findFirst({
-      where: { userId: user.id, businessId: user.businessId, status: "ACTIVE" }
+      where: { userId: user.id, businessId: user.businessId, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" }
     });
     if (activeSub) {
       const remainingMeals = activeSub.mealCount - activeSub.usedMeals;
@@ -286,7 +288,8 @@ export async function approveSubscriptionRequest(requestId) {
 
     // 1. Fetch current active subscription and calculate carry over meals
     const activeSub = await db.subscription.findFirst({
-      where: { userId: request.userId, businessId: request.businessId, status: "ACTIVE" }
+      where: { userId: request.userId, businessId: request.businessId, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" }
     });
     const carryOverMeals = activeSub ? (activeSub.mealCount - activeSub.usedMeals) : 0;
 
@@ -314,8 +317,7 @@ export async function approveSubscriptionRequest(requestId) {
     });
 
     // 3. Generate Bill
-    const billCount = await db.bill.count();
-    const invoiceNumber = `INV-${1000 + billCount + 1}`;
+    const invoiceNumber = await generateUniqueInvoiceNumber();
     
     const business = await db.business.findUnique({
       where: { id: request.businessId }

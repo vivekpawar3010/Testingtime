@@ -9,6 +9,11 @@ export async function submitBusinessProfile(data) {
     const user = await checkUser();
     if (!user) throw new Error("Unauthorized");
 
+    // Prevent customers or users linked to a mess from creating a business profile
+    if (user.role === "CUSTOMER" || user.businessId) {
+      throw new Error("You are registered as a customer at a mess. A customer account cannot create a mess profile.");
+    }
+
     const business = await db.business.create({
       data: {
         name: data.name,
