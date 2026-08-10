@@ -2,7 +2,7 @@ import React from "react";
 
 export default function FoodBackground() {
   return (
-    <div className="fixed inset-0 -z-50 w-full h-full overflow-hidden bg-slate-50/50 pointer-events-none select-none">
+    <div className="fixed inset-0 z-[1] w-full h-full overflow-hidden bg-transparent pointer-events-none select-none">
       {/* Subtle Food Doodle repeating pattern */}
       <svg className="absolute inset-0 w-full h-full opacity-[0.04] text-indigo-950" xmlns="http://www.w3.org/2000/svg">
         <defs>

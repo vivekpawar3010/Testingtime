@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "@/components/HeaderComponents/Header";
 import FoodBackground from "@/components/FoodBackground";
+import Footer from "@/components/Footer";
 import { checkUser } from "@/lib/checkUser";
 import { Mail, Phone, MapPin } from "lucide-react";
 import ContactForm from "@/components/ContactForm";
@@ -72,6 +73,7 @@ export default async function ContactPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

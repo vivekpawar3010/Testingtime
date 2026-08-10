@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { SignInButton } from '@clerk/nextjs';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -22,96 +22,61 @@ const MobileNav = ({ isLoggedIn, showFindMess = true }) => {
   const pathname = usePathname();
   const items = showFindMess ? navItems : navItems.filter(item => item.label !== "Find Mess");
 
-  const toggleMenu = () => setIsOpen(!isOpen);
-  const closeMenu = () => setIsOpen(false);
-
-  // Close menu when route changes
-  useEffect(() => {
-    closeMenu();
-  }, [pathname]);
-
-  // Prevent scroll when menu is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
   return (
-    <div className="md:hidden">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={toggleMenu}
-        aria-label="Toggle Menu"
-        className="relative z-50 text-foreground"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-      </Button>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-foreground hover:bg-indigo-50 hover:text-indigo-600 rounded-xl"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="h-6 w-6" />
+          </Button>
+        }
+      />
+      <SheetContent side="right" className="w-[80%] max-w-sm flex flex-col p-6 rounded-l-3xl border-l bg-white/95 backdrop-blur-md">
+        <SheetHeader className="border-b pb-4 text-left">
+          <SheetTitle className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600">
+            MessApp
+          </SheetTitle>
+        </SheetHeader>
 
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
-              onClick={closeMenu}
-            />
-            <motion.div
-              initial={{ opacity: 0, x: '100%' }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: '100%' }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 right-0 z-50 w-[80%] max-w-sm border-l bg-background shadow-2xl flex flex-col"
-            >
-              <div className="flex h-16 items-center px-6 border-b">
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600">
-                  MessApp
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto py-6 px-4">
-                <nav className="flex flex-col space-y-2">
-                  {items.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className={cn(
-                          "px-4 py-3 text-lg font-medium rounded-lg transition-colors",
-                          isActive
-                            ? "bg-indigo-50 text-indigo-600"
-                            : "text-foreground/70 hover:bg-muted hover:text-foreground"
-                        )}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </nav>
-
-                <div className="mt-8 px-4 sm:hidden">
-                  {!isLoggedIn && (
-                    <SignInButton mode="modal">
-                      <Button className="w-full rounded-full" size="lg">Sign In</Button>
-                    </SignInButton>
+        <div className="flex-1 overflow-y-auto py-6">
+          <nav className="flex flex-col space-y-2">
+            {items.map((item) => {
+              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    "px-4 py-3 text-lg font-medium rounded-xl transition-colors",
+                    isActive
+                      ? "bg-indigo-50 text-indigo-600"
+                      : "text-foreground/70 hover:bg-muted hover:text-foreground"
                   )}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="mt-8 px-4 sm:hidden">
+            {!isLoggedIn && (
+              <SignInButton mode="modal">
+                <Button className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md" size="lg">
+                  Sign In
+                </Button>
+              </SignInButton>
+            )}
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 

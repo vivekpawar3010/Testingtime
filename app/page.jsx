@@ -4,6 +4,7 @@ import Header from '@/components/HeaderComponents/Header'
 import { checkUser } from '@/lib/checkUser'
 import { db } from '@/lib/prisma'
 import { Store, Users } from 'lucide-react'
+import Footer from '@/components/Footer'
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,7 @@ const HomePage = async () => {
                  </div>
                </section>
             </main>
+            <Footer />
         </div>
     )
 }

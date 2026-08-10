@@ -1,6 +1,7 @@
 import React from 'react'
 import Header from '@/components/HeaderComponents/Header'
 import FoodBackground from '@/components/FoodBackground'
+import Footer from '@/components/Footer'
 import MessExplorer from '@/components/HeroComponents/MessExplorer'
 import { checkUser } from '@/lib/checkUser'
 import { getApprovedBusinesses } from '@/actions/business'
@@ -19,6 +20,7 @@ export default async function FindMessPage() {
             <main className='flex-1 py-8'>
                <MessExplorer initialBusinesses={approvedMesses} />
             </main>
+            <Footer />
         </div>
     )
 }

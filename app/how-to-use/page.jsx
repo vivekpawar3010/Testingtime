@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "@/components/HeaderComponents/Header";
 import FoodBackground from "@/components/FoodBackground";
+import Footer from "@/components/Footer";
 import { checkUser } from "@/lib/checkUser";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,6 +151,7 @@ export default async function HowToUsePage() {
           </TabsContent>
         </Tabs>
       </main>
+      <Footer />
     </div>
   );
 }

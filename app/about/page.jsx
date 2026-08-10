@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "@/components/HeaderComponents/Header";
 import FoodBackground from "@/components/FoodBackground";
+import Footer from "@/components/Footer";
 import { checkUser } from "@/lib/checkUser";
 import { Award, ShieldCheck, HeartHandshake, Users } from "lucide-react";
 
@@ -89,6 +90,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
