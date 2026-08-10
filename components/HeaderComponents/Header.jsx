@@ -3,11 +3,10 @@ import Link from 'next/link';
 import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
 import { Button } from '@/components/ui/button';
-import { Show, SignInButton, UserButton } from '@clerk/nextjs';
+import { SignInButton, UserButton } from '@clerk/nextjs';
 import { checkUser } from '@/lib/checkUser';
 
 const Header = async ({ user: propUser }) => {
-
   const user = propUser || await checkUser();
 
   return (
@@ -22,26 +21,27 @@ const Header = async ({ user: propUser }) => {
               MessApp
             </span>
           </Link>
-          <DesktopNav />
+          <DesktopNav showFindMess={!user || user.role === "CUSTOMER"} />
         </div>
 
         <div className="flex items-center gap-3">
-          <Show when="signed-in">
-            <Link href="/login-redirect">
-              <Button variant="outline" size="sm" className="rounded-full">
-                Dashboard
-              </Button>
-            </Link>
-            <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
-          </Show>
-          <Show when="signed-out">
+          {user ? (
+            <>
+              <Link href="/login-redirect">
+                <Button variant="outline" size="sm" className="rounded-full">
+                  Dashboard
+                </Button>
+              </Link>
+              <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "h-9 w-9" } }} />
+            </>
+          ) : (
             <SignInButton mode="modal">
               <Button size="sm" className="hidden sm:inline-flex rounded-full px-5 font-medium transition-all hover:shadow-md">
                 Sign In
               </Button>
             </SignInButton>
-          </Show>
-          <MobileNav />
+          )}
+          <MobileNav isLoggedIn={!!user} showFindMess={!user || user.role === "CUSTOMER"} />
         </div>
       </div>
     </header>

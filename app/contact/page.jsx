@@ -2,10 +2,8 @@ import React from "react";
 import Header from "@/components/HeaderComponents/Header";
 import FoodBackground from "@/components/FoodBackground";
 import { checkUser } from "@/lib/checkUser";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Mail, Phone, MapPin } from "lucide-react";
+import ContactForm from "@/components/ContactForm";
 
 export const dynamic = "force-dynamic";
 
@@ -46,14 +44,14 @@ export default async function ContactPage() {
                   <div className="h-9 w-9 rounded-lg bg-indigo-800/50 flex items-center justify-center">
                     <Phone className="h-4.5 w-4.5 text-indigo-300" />
                   </div>
-                  <span className="text-sm font-semibold text-indigo-100">+91 98765 43210</span>
+                  <span className="text-sm font-semibold text-indigo-100">-</span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 rounded-lg bg-indigo-800/50 flex items-center justify-center">
                     <Mail className="h-4.5 w-4.5 text-indigo-300" />
                   </div>
-                  <span className="text-sm font-semibold text-indigo-100">support@messapp.com</span>
+                  <span className="text-sm font-semibold text-indigo-100">advikssoftwaresolutions@gmail.com</span>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -61,7 +59,7 @@ export default async function ContactPage() {
                     <MapPin className="h-4.5 w-4.5 text-indigo-300" />
                   </div>
                   <span className="text-sm text-indigo-100 leading-tight">
-                    102, Tech Park Boulevard, Sector 62, Noida, India
+                    Pandharpur, Maharashtra, India
                   </span>
                 </div>
               </div>
@@ -69,41 +67,8 @@ export default async function ContactPage() {
           </div>
 
           {/* Form Side (3 cols) */}
-          <div className="md:col-span-3 bg-card/60 backdrop-blur-md p-8 rounded-3xl border border-neutral-100 shadow-xl">
-            <h3 className="text-lg font-bold text-indigo-950 mb-6">Send Us a Message</h3>
-            
-            <form className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="firstName" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">First Name</Label>
-                  <Input id="firstName" placeholder="John" className="border-neutral-200 focus:ring-indigo-500" required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lastName" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Last Name</Label>
-                  <Input id="lastName" placeholder="Doe" className="border-neutral-200 focus:ring-indigo-500" required />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</Label>
-                <Input id="email" type="email" placeholder="john@example.com" className="border-neutral-200 focus:ring-indigo-500" required />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="message" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Your Message</Label>
-                <textarea 
-                  id="message" 
-                  rows={4}
-                  placeholder="How can we help your mess today?" 
-                  className="flex w-full rounded-md border border-neutral-200 bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  required
-                />
-              </div>
-
-              <Button type="button" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold gap-2 shadow-md shadow-indigo-100 h-11 mt-2">
-                <Send className="h-4 w-4" /> Send Message
-              </Button>
-            </form>
+          <div className="md:col-span-3">
+            <ContactForm />
           </div>
         </div>
       </main>

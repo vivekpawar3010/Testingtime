@@ -7,7 +7,7 @@ import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Show, SignInButton } from '@clerk/nextjs';
+import { SignInButton } from '@clerk/nextjs';
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -17,9 +17,10 @@ const navItems = [
   { label: 'How to use', href: '/how-to-use' },
 ];
 
-const MobileNav = () => {
+const MobileNav = ({ isLoggedIn, showFindMess = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const items = showFindMess ? navItems : navItems.filter(item => item.label !== "Find Mess");
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
@@ -79,7 +80,7 @@ const MobileNav = () => {
 
               <div className="flex-1 overflow-y-auto py-6 px-4">
                 <nav className="flex flex-col space-y-2">
-                  {navItems.map((item) => {
+                  {items.map((item) => {
                     const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                     return (
                       <Link
@@ -99,11 +100,11 @@ const MobileNav = () => {
                 </nav>
 
                 <div className="mt-8 px-4 sm:hidden">
-                  <Show when="signed-out">
+                  {!isLoggedIn && (
                     <SignInButton mode="modal">
                       <Button className="w-full rounded-full" size="lg">Sign In</Button>
                     </SignInButton>
-                  </Show>
+                  )}
                 </div>
               </div>
             </motion.div>

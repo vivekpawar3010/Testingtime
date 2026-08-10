@@ -58,6 +58,175 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
   // Invoice Print View State
   const [selectedBillForPrint, setSelectedBillForPrint] = useState(null);
 
+  const handlePrintInvoice = () => {
+    if (!selectedBillForPrint) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      toast.error("Popup blocked! Please allow popups to print invoices.");
+      return;
+    }
+
+    const bill = selectedBillForPrint;
+    const dateStr = new Date(bill.createdAt).toLocaleDateString();
+    const dueDateStr = bill.dueDate ? new Date(bill.dueDate).toLocaleDateString() : "N/A";
+    const subtotal = (bill.totalAmount + bill.discount - bill.extraCharges - bill.gst).toFixed(2);
+    
+    const logoHtml = businessSettings?.logoUrl 
+      ? `<img src="${businessSettings.logoUrl}" style="height: 50px; width: 50px; border-radius: 8px; object-fit: cover;" />`
+      : "";
+
+    const statusClass = bill.status === "PAID" 
+      ? "badge-paid" 
+      : bill.status === "PARTIAL" 
+      ? "badge-partial" 
+      : "badge-unpaid";
+
+    let paymentsHtml = "";
+    if (bill.payments && bill.payments.length > 0) {
+      paymentsHtml = `
+        <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+          <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: bold; color: #1e293b;">Transaction Payments Log:</h4>
+          ${bill.payments.map((pm, idx) => `
+            <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f1f5f9;">
+              <span style="color: #64748b;">
+                Payment #${idx + 1} (${pm.paymentMethod} ${pm.transactionId ? `[TXID: ${pm.transactionId}]` : ""}) - ${new Date(pm.paymentDate).toLocaleDateString()}
+              </span>
+              <span style="font-weight: bold; color: #16a34a;">+₹${pm.amount}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice - ${bill.invoiceNumber}</title>
+          <style>
+            body { font-family: system-ui, -apple-system, sans-serif; color: #1e293b; padding: 40px; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; align-items: center; }
+            .title { font-size: 24px; font-weight: bold; color: #4f46e5; margin: 0; }
+            .details { display: flex; justify-content: space-between; margin-top: 30px; }
+            .section-title { font-weight: bold; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.5px; }
+            .table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+            .table th { border-bottom: 2px solid #cbd5e1; padding: 12px 8px; text-align: left; font-size: 12px; color: #475569; font-weight: bold; text-transform: uppercase; }
+            .table td { border-bottom: 1px solid #e2e8f0; padding: 12px 8px; font-size: 13px; }
+            .summary-box { display: flex; justify-content: space-between; margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; }
+            .summary-item { display: flex; flex-direction: column; }
+            .summary-label { font-size: 10px; font-weight: bold; color: #64748b; text-transform: uppercase; margin-bottom: 4px; }
+            .summary-value { font-size: 16px; font-weight: bold; }
+            .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+            .badge-paid { background-color: #dcfce7; color: #15803d; }
+            .badge-unpaid { background-color: #fee2e2; color: #b91c1c; }
+            .badge-partial { background-color: #fef3c7; color: #b45309; }
+            .print-btn { background-color: #4f46e5; color: white; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; margin-bottom: 20px; }
+            @media print {
+              body { padding: 0; }
+              .print-btn { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <button class="print-btn" onclick="window.print()">Print Invoice</button>
+          <div class="header">
+            <div>
+              <h2 class="title">INVOICE</h2>
+              <p style="font-size: 13px; color: #64748b; margin: 4px 0 0 0;">Invoice Number: <strong>${bill.invoiceNumber}</strong></p>
+              <p style="font-size: 13px; color: #64748b; margin: 2px 0 0 0;">Date: ${dateStr}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="text-align: right;">
+                <h3 style="margin: 0; font-size: 16px; font-weight: bold; color: #0f172a;">${businessSettings?.name || "MessApp Operations"}</h3>
+                <p style="margin: 4px 0 0 0; font-size: 12px; color: #64748b; max-width: 200px;">${businessSettings?.address || ""}</p>
+                ${businessSettings?.phone ? `<p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Phone: ${businessSettings.phone}</p>` : ""}
+              </div>
+              ${logoHtml}
+            </div>
+          </div>
+
+          <div class="details">
+            <div>
+              <div class="section-title">Billed To</div>
+              <p style="margin: 0; font-size: 14px; font-weight: bold; color: #0f172a;">${bill.user.name}</p>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: #475569;">${bill.user.email}</p>
+              <p style="margin: 2px 0 0 0; font-size: 13px; color: #475569;">${bill.user.phone || ""}</p>
+            </div>
+            <div style="text-align: right;">
+              <div class="section-title">Payment Status</div>
+              <span class="badge ${statusClass}">${bill.status}</span>
+              <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b;">Due Date: ${dueDateStr}</p>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <p style="margin: 0; font-weight: bold; color: #0f172a;">Mess Subscription package</p>
+                  <p style="margin: 4px 0 0 0; font-size: 11px; color: #64748b;">Standard meals assignment</p>
+                </td>
+                <td style="text-align: right; font-weight: bold;">₹${subtotal}</td>
+              </tr>
+              ${bill.gst > 0 ? `
+                <tr>
+                  <td style="color: #475569;">Taxes & GST</td>
+                  <td style="text-align: right;">₹${bill.gst.toFixed(2)}</td>
+                </tr>
+              ` : ""}
+              ${bill.extraCharges > 0 ? `
+                <tr>
+                  <td style="color: #475569;">Additional Service Charges</td>
+                  <td style="text-align: right;">₹${bill.extraCharges.toFixed(2)}</td>
+                </tr>
+              ` : ""}
+              ${bill.discount > 0 ? `
+                <tr style="color: #b91c1c;">
+                  <td>Discount Offer Applied</td>
+                  <td style="text-align: right;">-₹${bill.discount.toFixed(2)}</td>
+                </tr>
+              ` : ""}
+              <tr style="background: #f8fafc; font-weight: bold; font-size: 15px;">
+                <td style="padding: 14px 8px;">Grand Total:</td>
+                <td style="text-align: right; color: #4f46e5; padding: 14px 8px;">₹${bill.totalAmount.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          ${paymentsHtml}
+
+          <div class="summary-box">
+            <div class="summary-item">
+              <span class="summary-label">Total Collected Balance</span>
+              <span class="summary-value" style="color: #16a34a;">₹${bill.paidAmount.toFixed(2)}</span>
+            </div>
+            <div class="summary-item" style="text-align: right;">
+              <span class="summary-label">Net Dues Outstanding</span>
+              <span class="summary-value" style="color: #b91c1c;">₹${bill.remainingAmount.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p style="font-size: 10px; margin-top: 5px;">Powered by MessApp Operations</p>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   const handleCreateBill = async (e) => {
     e.preventDefault();
     if (!selectedCustomerId) {
@@ -586,7 +755,7 @@ export default function BillingClient({ initialBills, activeCustomers, businessS
                 </Button>
                 <Button 
                   className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium gap-1.5"
-                  onClick={() => window.print()}
+                  onClick={handlePrintInvoice}
                 >
                   <Printer className="h-4 w-4" /> Print Invoice
                 </Button>

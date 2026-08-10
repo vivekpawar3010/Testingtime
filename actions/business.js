@@ -117,3 +117,42 @@ export async function getApprovedBusinesses() {
     return { success: false, error: error.message };
   }
 }
+
+export async function getBusinessPlansByUniqueId(uniqueId) {
+  try {
+    const business = await db.business.findUnique({
+      where: { uniqueId }
+    });
+    if (!business) throw new Error("Mess not found");
+
+    const plans = await db.subscriptionPlan.findMany({
+      where: { businessId: business.id },
+      orderBy: { createdAt: "desc" }
+    });
+
+    return { success: true, plans };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getBusinessDailyMenuByUniqueId(uniqueId) {
+  try {
+    const business = await db.business.findUnique({
+      where: { uniqueId }
+    });
+    if (!business) throw new Error("Mess not found");
+
+    const dailyMenu = await db.menu.findFirst({
+      where: {
+        businessId: business.id,
+        type: "DAILY",
+        status: "ACTIVE"
+      }
+    });
+
+    return { success: true, dailyMenu };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}

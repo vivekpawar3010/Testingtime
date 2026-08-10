@@ -2,7 +2,7 @@ import React from 'react'
 import Link from 'next/link'
 import { checkUser } from '@/lib/checkUser'
 import { redirect } from 'next/navigation'
-import { LayoutDashboard, Users, UserPlus, Settings, ClipboardList } from 'lucide-react'
+import { LayoutDashboard, Users, UserPlus, Settings, ClipboardList, Mail } from 'lucide-react'
 import { UserButton } from '@clerk/nextjs'
 
 export default async function SuperAdminLayout({ children }) {
@@ -39,6 +39,10 @@ export default async function SuperAdminLayout({ children }) {
           <Link href="/super-admin/users" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground hover:bg-muted">
             <Users className="h-5 w-5" />
             All Users
+          </Link>
+          <Link href="/super-admin/messages" className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-foreground hover:bg-muted">
+            <Mail className="h-5 w-5" />
+            Contact Messages
           </Link>
         </nav>
       </aside>

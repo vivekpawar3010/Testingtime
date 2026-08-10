@@ -5,9 +5,41 @@ import { Search, MapPin, Phone, ArrowRight, UtensilsCrossed } from "lucide-react
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getBusinessPlansByUniqueId, getBusinessDailyMenuByUniqueId } from "@/actions/business";
 
 export default function MessExplorer({ initialBusinesses }) {
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Modals state
+  const [activeDialog, setActiveDialog] = useState(null); // { type: 'plans' | 'menu', mess: any }
+  const [dialogLoading, setDialogLoading] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [menu, setMenu] = useState(null);
+
+  const handleOpenDialog = async (type, mess) => {
+    setActiveDialog({ type, mess });
+    setDialogLoading(true);
+    setPlans([]);
+    setMenu(null);
+    try {
+      if (type === "plans") {
+        const res = await getBusinessPlansByUniqueId(mess.uniqueId);
+        if (res.success) {
+          setPlans(res.plans);
+        }
+      } else if (type === "menu") {
+        const res = await getBusinessDailyMenuByUniqueId(mess.uniqueId);
+        if (res.success) {
+          setMenu(res.dailyMenu);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDialogLoading(false);
+    }
+  };
 
   const filteredMesses = initialBusinesses.filter((biz) => {
     const nameMatch = biz.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -96,8 +128,25 @@ export default function MessExplorer({ initialBusinesses }) {
                   </div>
                 </div>
 
-                {/* Action button */}
-                <div className="pt-6 mt-auto">
+                {/* Action buttons */}
+                <div className="pt-6 mt-auto space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleOpenDialog("plans", biz)}
+                      className="border-indigo-100 text-indigo-700 hover:bg-indigo-50 font-semibold text-[11px] rounded-xl h-9"
+                    >
+                      Dine Plans
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => handleOpenDialog("menu", biz)}
+                      className="border-indigo-100 text-indigo-700 hover:bg-indigo-50 font-semibold text-[11px] rounded-xl h-9"
+                    >
+                      Daily Menu
+                    </Button>
+                  </div>
+                  
                   <Link href={`/customer/register?messId=${biz.uniqueId}`} className="block w-full">
                     <Button 
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1.5 rounded-2xl h-10 shadow-sm transition-all"
@@ -111,6 +160,73 @@ export default function MessExplorer({ initialBusinesses }) {
           </div>
         )}
       </div>
+
+      {/* Dynamic Info Modals */}
+      <Dialog open={activeDialog !== null} onOpenChange={(open) => !open && setActiveDialog(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {activeDialog?.type === "plans" ? "Mess Subscription Packages" : "Today's Daily Menu"}
+            </DialogTitle>
+            <DialogDescription>
+              Viewing from <strong>{activeDialog?.mess?.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {dialogLoading ? (
+              <div className="flex h-32 items-center justify-center">
+                <span className="h-6 w-6 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
+              </div>
+            ) : activeDialog?.type === "plans" ? (
+              plans.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground">
+                  No subscription plans published by this mess yet.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+                  {plans.map((p) => (
+                    <div key={p.id} className="rounded-xl border p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-sm text-indigo-950">{p.name}</h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">Validity: {p.validityDays} Days | Total: {p.mealCount} Meals</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-extrabold text-indigo-600">₹{p.totalAmount}</span>
+                          <p className="text-[9px] text-muted-foreground mt-0.5">₹{p.mealPrice}/meal</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              !menu ? (
+                <div className="text-center py-8 text-xs text-muted-foreground">
+                  Today's menu hasn't been posted by this mess yet.
+                </div>
+              ) : (
+                <div className="rounded-2xl border bg-slate-50/50 p-4 space-y-4">
+                  <div>
+                    <h4 className="font-extrabold text-sm text-indigo-950 uppercase tracking-wider">{menu.title}</h4>
+                    {menu.date && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Date: {new Date(menu.date).toLocaleDateString()}</p>
+                    )}
+                  </div>
+                  {menu.description ? (
+                    <div className="bg-white rounded-xl p-3 border border-slate-100 text-xs text-indigo-900 font-medium whitespace-pre-wrap leading-relaxed">
+                      {menu.description}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No menu details provided.</p>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

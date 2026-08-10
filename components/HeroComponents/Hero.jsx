@@ -69,12 +69,6 @@ const Hero = ({ userRole }) => {
                 Get Started for Free <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             )}
-            <Link 
-              href="/features"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "rounded-full px-8 h-14 text-base w-full sm:w-auto border-2")}
-            >
-              Explore Features
-            </Link>
           </motion.div>
 
           <motion.div

@@ -252,3 +252,14 @@ model BusinessSubscription {
   business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   plan        BusinessPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
 }
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String
+  status    String   @default("PENDING") // PENDING, REPLIED
+  replyText String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

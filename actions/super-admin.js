@@ -307,3 +307,67 @@ export async function getExpiringMesses(daysLimit = 10) {
     return { success: false, error: error.message };
   }
 }
+
+export async function submitContactMessage(data) {
+  try {
+    const message = await db.contactMessage.create({
+      data: {
+        name: `${data.firstName} ${data.lastName}`.trim(),
+        email: data.email,
+        message: data.message
+      }
+    });
+    return { success: true, message };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getContactMessages(page = 1) {
+  try {
+    await verifySuperAdmin();
+    const limit = 10;
+    const skip = (page - 1) * limit;
+
+    const totalMessages = await db.contactMessage.count();
+    const totalPages = Math.ceil(totalMessages / limit);
+
+    const messages = await db.contactMessage.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" }
+    });
+
+    return {
+      success: true,
+      messages,
+      pagination: {
+        page,
+        limit,
+        totalPages,
+        totalMessages
+      }
+    };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function replyToContactMessage(messageId, replyText) {
+  try {
+    await verifySuperAdmin();
+
+    const updated = await db.contactMessage.update({
+      where: { id: messageId },
+      data: {
+        status: "REPLIED",
+        replyText
+      }
+    });
+
+    revalidatePath("/super-admin/messages");
+    return { success: true, message: updated };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}

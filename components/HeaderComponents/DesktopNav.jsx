@@ -13,12 +13,13 @@ const navItems = [
   { label: 'How to use', href: '/how-to-use' },
 ];
 
-const DesktopNav = () => {
+const DesktopNav = ({ showFindMess = true }) => {
   const pathname = usePathname();
+  const items = showFindMess ? navItems : navItems.filter(item => item.label !== "Find Mess");
 
   return (
     <nav className="hidden md:flex items-center gap-1">
-      {navItems.map((item) => {
+      {items.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
         return (
           <Link
