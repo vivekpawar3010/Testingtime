@@ -30,8 +30,10 @@ export default function MenuClient({ initialMenuItems }) {
   const isMenuEnabled = menuItems.length === 0 || menuItems.some(item => item.status === "ACTIVE");
 
   const [selectedDay, setSelectedDay] = useState("MONDAY");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [lunchTitle, setLunchTitle] = useState("");
+  const [lunchDescription, setLunchDescription] = useState("");
+  const [dinnerTitle, setDinnerTitle] = useState("");
+  const [dinnerDescription, setDinnerDescription] = useState("");
 
   // Daily Menu Form States
   const [dailyTitle, setDailyTitle] = useState("");
@@ -43,18 +45,27 @@ export default function MenuClient({ initialMenuItems }) {
   const [festivalDescription, setFestivalDescription] = useState("");
 
   // Find existing menu item for currently selected day
-  const activeWeeklyEntry = menuItems.find(item => item.type === "WEEKLY" && item.day === selectedDay);
   const activeDailyEntry = menuItems.find(item => item.type === "DAILY");
 
   const handleSelectDay = (day) => {
     setSelectedDay(day);
-    const entry = menuItems.find(item => item.type === "WEEKLY" && item.day === day);
-    if (entry) {
-      setTitle(entry.title);
-      setDescription(entry.description || "");
+    const lunchEntry = menuItems.find(item => item.type === "WEEKLY" && item.day === day && item.mealType === "LUNCH");
+    const dinnerEntry = menuItems.find(item => item.type === "WEEKLY" && item.day === day && item.mealType === "DINNER");
+    
+    if (lunchEntry) {
+      setLunchTitle(lunchEntry.title);
+      setLunchDescription(lunchEntry.description || "");
     } else {
-      setTitle("");
-      setDescription("");
+      setLunchTitle("");
+      setLunchDescription("");
+    }
+
+    if (dinnerEntry) {
+      setDinnerTitle(dinnerEntry.title);
+      setDinnerDescription(dinnerEntry.description || "");
+    } else {
+      setDinnerTitle("");
+      setDinnerDescription("");
     }
   };
 
@@ -62,24 +73,35 @@ export default function MenuClient({ initialMenuItems }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await saveMenuEntry({
+      // Save Lunch
+      const lunchRes = await saveMenuEntry({
         type: "WEEKLY",
         day: selectedDay,
-        title,
-        description
+        mealType: "LUNCH",
+        title: lunchTitle,
+        description: lunchDescription
       });
 
-      if (res.success) {
-        toast.success(`Saved menu for ${selectedDay}!`);
+      // Save Dinner
+      const dinnerRes = await saveMenuEntry({
+        type: "WEEKLY",
+        day: selectedDay,
+        mealType: "DINNER",
+        title: dinnerTitle,
+        description: dinnerDescription
+      });
+
+      if (lunchRes.success && dinnerRes.success) {
+        toast.success(`Saved lunch and dinner menu for ${selectedDay}!`);
         setMenuItems(prev => {
           const filtered = prev.filter(item => !(item.type === "WEEKLY" && item.day === selectedDay));
-          return [...filtered, res.menu];
+          return [...filtered, lunchRes.menu, dinnerRes.menu];
         });
       } else {
-        toast.error(res.error || "Failed to save menu");
+        toast.error("Failed to save menu");
       }
-    } catch (e) {
-      toast.error(e.message);
+    } catch (err) {
+      toast.error(err.message || "Error saving menu");
     } finally {
       setLoading(false);
     }
@@ -190,10 +212,15 @@ export default function MenuClient({ initialMenuItems }) {
       setDailyDescription(activeDailyEntry.description || "");
     }
     // Load Monday initially
-    const mon = initialMenuItems.find(item => item.type === "WEEKLY" && item.day === "MONDAY");
-    if (mon) {
-      setTitle(mon.title);
-      setDescription(mon.description || "");
+    const monLunch = initialMenuItems.find(item => item.type === "WEEKLY" && item.day === "MONDAY" && item.mealType === "LUNCH");
+    const monDinner = initialMenuItems.find(item => item.type === "WEEKLY" && item.day === "MONDAY" && item.mealType === "DINNER");
+    if (monLunch) {
+      setLunchTitle(monLunch.title);
+      setLunchDescription(monLunch.description || "");
+    }
+    if (monDinner) {
+      setDinnerTitle(monDinner.title);
+      setDinnerDescription(monDinner.description || "");
     }
   });
 
@@ -267,33 +294,65 @@ export default function MenuClient({ initialMenuItems }) {
                 </div>
               </div>
 
-              <form onSubmit={handleSaveWeekly} className="space-y-3 pt-3 border-t">
-                <div className="space-y-2">
-                  <Label htmlFor="menu-title">Main Dish / Title</Label>
-                  <Input 
-                    id="menu-title" 
-                    required 
-                    value={title} 
-                    onChange={(e) => setTitle(e.target.value)} 
-                    placeholder="E.g. Paneer Masala & Dal Fry" 
-                  />
+              <form onSubmit={handleSaveWeekly} className="space-y-4 pt-3 border-t">
+                {/* Lunch Fields */}
+                <div className="space-y-3 p-3 bg-amber-50/20 border border-amber-100 rounded-xl">
+                  <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[9px] font-bold text-amber-800 uppercase tracking-wider">Lunch Menu</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="lunch-title" className="text-xs font-bold text-neutral-600">Lunch Dish Title</Label>
+                    <Input 
+                      id="lunch-title" 
+                      required 
+                      value={lunchTitle} 
+                      onChange={(e) => setLunchTitle(e.target.value)} 
+                      placeholder="E.g. Veg Thali / Rice Plate" 
+                      className="h-9 border-neutral-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lunch-desc" className="text-xs font-bold text-neutral-600">Lunch Details</Label>
+                    <textarea
+                      id="lunch-desc"
+                      required
+                      rows={3}
+                      value={lunchDescription}
+                      onChange={(e) => setLunchDescription(e.target.value)}
+                      placeholder="E.g. Rice, Chapati, Dal, Veg Mix, Pickle"
+                      className="flex min-h-[60px] w-full rounded-md border border-neutral-200 bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="menu-desc">Menu Details (Separated by commas)</Label>
-                  <textarea
-                    id="menu-desc"
-                    required
-                    rows={4}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="E.g. Butter Roti, Basmati Rice, Jeera Dal, Pickle, Gulab Jamun"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
+                {/* Dinner Fields */}
+                <div className="space-y-3 p-3 bg-indigo-50/20 border border-indigo-100 rounded-xl">
+                  <span className="inline-block rounded-full bg-indigo-100 px-2.5 py-0.5 text-[9px] font-bold text-indigo-800 uppercase tracking-wider">Dinner Menu</span>
+                  <div className="space-y-2">
+                    <Label htmlFor="dinner-title" className="text-xs font-bold text-neutral-600">Dinner Dish Title</Label>
+                    <Input 
+                      id="dinner-title" 
+                      required 
+                      value={dinnerTitle} 
+                      onChange={(e) => setDinnerTitle(e.target.value)} 
+                      placeholder="E.g. Aloo Paratha / Roti Sabji" 
+                      className="h-9 border-neutral-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dinner-desc" className="text-xs font-bold text-neutral-600">Dinner Details</Label>
+                    <textarea
+                      id="dinner-desc"
+                      required
+                      rows={3}
+                      value={dinnerDescription}
+                      onChange={(e) => setDinnerDescription(e.target.value)}
+                      placeholder="E.g. 3 Parathas, Curd, Pickle, Butter"
+                      className="flex min-h-[60px] w-full rounded-md border border-neutral-200 bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium" disabled={loading}>
-                  <Save className="h-4 w-4 mr-2" /> Save {selectedDay.toLowerCase()} Menu
+                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md shadow-indigo-100 rounded-xl" disabled={loading}>
+                  <Save className="h-4 w-4 mr-2" /> Save {selectedDay.toLowerCase()} Plans
                 </Button>
               </form>
             </CardContent>
@@ -308,27 +367,40 @@ export default function MenuClient({ initialMenuItems }) {
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 {DAYS_OF_WEEK.map((day) => {
-                  const entry = menuItems.find(item => item.type === "WEEKLY" && item.day === day);
+                  const lunchEntry = menuItems.find(item => item.type === "WEEKLY" && item.day === day && item.mealType === "LUNCH");
+                  const dinnerEntry = menuItems.find(item => item.type === "WEEKLY" && item.day === day && item.mealType === "DINNER");
+                  const hasData = lunchEntry || dinnerEntry;
+
                   return (
-                    <div key={day} className={`rounded-xl border p-4 transition-all ${entry ? "bg-card shadow-sm border-indigo-100 hover:shadow" : "bg-muted/30 border-dashed border-2 flex flex-col justify-center items-center py-6"}`}>
+                    <div key={day} className={`rounded-xl border p-4 transition-all ${hasData ? "bg-card shadow-sm border-indigo-100 hover:shadow" : "bg-muted/30 border-dashed border-2 flex flex-col justify-center items-center py-6"}`}>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground font-sans">
                           {day}
                         </span>
-                        {entry && (
+                        {hasData && (
                           <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500" />
                         )}
                       </div>
                       
-                      {entry ? (
-                        <div className="space-y-1.5">
-                          <h4 className="font-bold text-sm text-foreground">{entry.title}</h4>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {entry.description || "No items listed."}
-                          </p>
+                      {hasData ? (
+                        <div className="space-y-3 text-left">
+                          {lunchEntry && (
+                            <div className="space-y-1 border-b pb-2 last:border-b-0 last:pb-0">
+                              <span className="inline-block rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-bold text-amber-700 uppercase tracking-wider">Lunch</span>
+                              <h4 className="font-bold text-xs text-foreground mt-1">{lunchEntry.title}</h4>
+                              <p className="text-[11px] text-muted-foreground leading-relaxed">{lunchEntry.description || "No details."}</p>
+                            </div>
+                          )}
+                          {dinnerEntry && (
+                            <div className="space-y-1">
+                              <span className="inline-block rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-bold text-indigo-700 uppercase tracking-wider">Dinner</span>
+                              <h4 className="font-bold text-xs text-foreground mt-1">{dinnerEntry.title}</h4>
+                              <p className="text-[11px] text-muted-foreground leading-relaxed">{dinnerEntry.description || "No details."}</p>
+                            </div>
+                          )}
                         </div>
                       ) : (
-                        <div className="text-center">
+                        <div className="text-center py-2">
                           <span className="text-[11px] font-semibold text-muted-foreground">No menu set</span>
                         </div>
                       )}

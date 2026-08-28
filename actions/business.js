@@ -110,6 +110,7 @@ export async function getApprovedBusinesses() {
   try {
     const businesses = await db.business.findMany({
       where: { status: "APPROVED" },
+      include: { holidays: true },
       orderBy: { name: "asc" }
     });
     return { success: true, businesses };

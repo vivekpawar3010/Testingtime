@@ -178,16 +178,84 @@ export async function getUserRedirectPathHelper(user) {
   }
   
   if (user.role === "CUSTOMER") {
-    if (!user.businessId) {
+    if (!user.name || !user.phone) {
       return "/customer/register";
     }
-    if (user.status === "PENDING") {
+    if (user.status === "PENDING" && user.businessId) {
       return "/pending-approval";
     }
-    if (user.status === "ACTIVE") {
-      return "/customer/dashboard";
-    }
+    return "/customer/dashboard";
   }
   
   return "/";
+}
+
+export async function registerCustomerInitialProfile(data) {
+  try {
+    const user = await checkUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const updatedUser = await db.user.update({
+      where: { id: user.id },
+      data: {
+        name: data.name,
+        phone: data.phone,
+        role: "CUSTOMER",
+        status: "ACTIVE", // Set to ACTIVE initially so they can access dashboard/explore messes
+        businessId: null  // Not linked to any mess initially
+      }
+    });
+
+    revalidatePath("/");
+    return { success: true, user: updatedUser };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function requestToJoinMess(messId) {
+  try {
+    const user = await checkUser();
+    if (!user) throw new Error("Unauthorized");
+    if (user.role !== "CUSTOMER") throw new Error("Only customers can join a mess");
+
+    // Find the business by uniqueId
+    const business = await db.business.findUnique({
+      where: { uniqueId: messId }
+    });
+
+    if (!business) {
+      throw new Error("Mess not found with this ID.");
+    }
+    
+    if (business.status !== "APPROVED") {
+      throw new Error("This mess is not yet approved by the platform administrator.");
+    }
+
+    const updatedUser = await db.user.update({
+      where: { id: user.id },
+      data: {
+        businessId: business.id,
+        status: "PENDING" // Set to PENDING awaiting approval
+      }
+    });
+
+    revalidatePath("/");
+    return { success: true, user: updatedUser };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function checkCustomerProfileStatus() {
+  try {
+    const user = await checkUser();
+    if (!user) {
+      return { success: true, loggedIn: false };
+    }
+    const isRegistered = !!(user.name && user.phone);
+    return { success: true, loggedIn: true, isRegistered, role: user.role };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 }

@@ -73,6 +73,7 @@ model Business {
   
   isActive      Boolean  @default(true)
   platformSubscriptions BusinessSubscription[]
+  holidays      Holiday[]
   
   // Settings fields
   qrScanEnabled    Boolean  @default(true)
@@ -172,9 +173,10 @@ model Payment {
 model Menu {
   id          String   @id @default(uuid())
   businessId  String
-  type        String   // DAILY, WEEKLY
+  type        String   // DAILY, WEEKLY, FESTIVAL
   day         String?  // MONDAY, TUESDAY...
   date        DateTime?
+  mealType    String?  // LUNCH, DINNER, BREAKFAST, ALL
   title       String
   description String?
   status      String   @default("ACTIVE")
@@ -183,6 +185,20 @@ model Menu {
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Holiday {
+  id          String    @id @default(uuid())
+  businessId  String
+  date        DateTime? // Specific holiday date
+  dayOfWeek   String?   // MONDAY, TUESDAY, etc.
+  mealType    String    @default("ALL") // ALL, BREAKFAST, LUNCH, DINNER
+  title       String?   // e.g. "Sunday Off"
+  
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Notification {

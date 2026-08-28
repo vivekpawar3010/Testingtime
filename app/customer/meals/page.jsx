@@ -3,6 +3,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { History, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { checkUser } from "@/lib/checkUser";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +13,23 @@ export default async function CustomerMealsPage({ searchParams }) {
   const page = parseInt(params?.page) || 1;
   const limit = 10;
   const skip = (page - 1) * limit;
+
+  const user = await checkUser();
+  if (!user || user.role !== "CUSTOMER") {
+    redirect("/sign-in");
+  }
+
+  if (!user.businessId) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-center max-w-md mx-auto">
+        <ShieldAlert className="h-12 w-12 text-amber-500 animate-bounce" />
+        <h3 className="text-xl font-bold">No Mess Associated</h3>
+        <p className="text-muted-foreground text-sm">
+          You are not associated with any mess yet. Please link a mess from your dashboard first to view dine history.
+        </p>
+      </div>
+    );
+  }
 
   const res = await getCustomerMealLogs();
 

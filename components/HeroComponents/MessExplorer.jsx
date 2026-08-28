@@ -41,6 +41,39 @@ export default function MessExplorer({ initialBusinesses }) {
     }
   };
 
+  const getTodayHolidayStatus = (holidays) => {
+    if (!holidays || holidays.length === 0) return null;
+
+    const today = new Date();
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const currentDayName = days[today.getDay()];
+    const todayStr = today.toDateString();
+
+    // Check date-specific holiday
+    const specificHoliday = holidays.find(
+      (h) => h.date && new Date(h.date).toDateString() === todayStr
+    );
+    if (specificHoliday) {
+      return {
+        mealType: specificHoliday.mealType,
+        title: specificHoliday.title || "Holiday"
+      };
+    }
+
+    // Check weekly recurring off
+    const weeklyOff = holidays.find(
+      (h) => h.dayOfWeek && h.dayOfWeek.toUpperCase() === currentDayName
+    );
+    if (weeklyOff) {
+      return {
+        mealType: weeklyOff.mealType,
+        title: weeklyOff.title || `${currentDayName} Off`
+      };
+    }
+
+    return null;
+  };
+
   const filteredMesses = initialBusinesses.filter((biz) => {
     const nameMatch = biz.name.toLowerCase().includes(searchQuery.toLowerCase());
     const addressMatch = (biz.address || "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -84,36 +117,50 @@ export default function MessExplorer({ initialBusinesses }) {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredMesses.map((biz) => (
-              <div 
-                key={biz.id}
-                className="group flex flex-col justify-between bg-white/80 backdrop-blur-md border border-neutral-100 rounded-3xl p-6 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-              >
-                <div className="space-y-4">
-                  {/* Top line with logo/avatar */}
-                  <div className="flex items-center gap-4">
-                    {biz.logoUrl ? (
-                      <img 
-                        src={biz.logoUrl} 
-                        alt={biz.name}
-                        className="h-14 w-14 object-cover rounded-2xl border bg-white shadow-sm shrink-0"
-                      />
-                    ) : (
-                      <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-100">
-                        <UtensilsCrossed className="h-6 w-6" />
+            {filteredMesses.map((biz) => {
+              const holidayInfo = getTodayHolidayStatus(biz.holidays);
+              return (
+                <div 
+                  key={biz.id}
+                  className="group flex flex-col justify-between bg-white/80 backdrop-blur-md border border-neutral-100 rounded-3xl p-6 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                >
+                  <div className="space-y-4">
+                    {/* Top line with logo/avatar */}
+                    <div className="flex items-center gap-4">
+                      {biz.logoUrl ? (
+                        <img 
+                          src={biz.logoUrl} 
+                          alt={biz.name}
+                          className="h-14 w-14 object-cover rounded-2xl border bg-white shadow-sm shrink-0"
+                        />
+                      ) : (
+                        <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-100">
+                          <UtensilsCrossed className="h-6 w-6" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-extrabold text-indigo-950 text-base leading-snug group-hover:text-indigo-600 transition-colors">
+                          {biz.name}
+                        </h3>
+                        <span className="inline-block text-[10px] font-bold font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mt-1 border border-indigo-100/50">
+                          ID: {biz.uniqueId || "PENDING"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {holidayInfo && (
+                      <div className={`text-[10px] font-bold px-3 py-1 rounded-full w-fit flex items-center gap-1.5 shadow-sm border ${holidayInfo.mealType === 'ALL' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
+                        <span className="relative flex h-1.5 w-1.5 shrink-0">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${holidayInfo.mealType === 'ALL' ? 'bg-red-400' : 'bg-amber-400'}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${holidayInfo.mealType === 'ALL' ? 'bg-red-500' : 'bg-amber-500'}`}></span>
+                        </span>
+                        <span>
+                          CLOSED: {holidayInfo.title} ({holidayInfo.mealType === 'ALL' ? 'All Day' : holidayInfo.mealType})
+                        </span>
                       </div>
                     )}
-                    <div>
-                      <h3 className="font-extrabold text-indigo-950 text-base leading-snug group-hover:text-indigo-600 transition-colors">
-                        {biz.name}
-                      </h3>
-                      <span className="inline-block text-[10px] font-bold font-mono text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mt-1 border border-indigo-100/50">
-                        ID: {biz.uniqueId || "PENDING"}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Details */}
+                    {/* Details */}
                   <div className="space-y-2 text-xs text-muted-foreground pt-2">
                     <div className="flex items-start gap-2">
                       <MapPin className="h-4 w-4 text-neutral-400 mt-0.5 shrink-0" />
@@ -146,8 +193,7 @@ export default function MessExplorer({ initialBusinesses }) {
                       Daily Menu
                     </Button>
                   </div>
-                  
-                  <Link href={`/customer/register?messId=${biz.uniqueId}`} className="block w-full">
+                  <Link href={`/customer/join?messId=${biz.uniqueId}`} className="block w-full">
                     <Button 
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs gap-1.5 rounded-2xl h-10 shadow-sm transition-all"
                     >
@@ -156,7 +202,8 @@ export default function MessExplorer({ initialBusinesses }) {
                   </Link>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 import { getCustomerMenu } from "@/actions/menu";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Utensils, CalendarDays, ShieldAlert, Award, Sparkles } from "lucide-react";
+import { checkUser } from "@/lib/checkUser";
+import { redirect } from "next/navigation";
 
 const DAYS_OF_WEEK = [
   "MONDAY",
@@ -15,6 +17,23 @@ const DAYS_OF_WEEK = [
 export const dynamic = "force-dynamic";
 
 export default async function CustomerMenuPage() {
+  const user = await checkUser();
+  if (!user || user.role !== "CUSTOMER") {
+    redirect("/sign-in");
+  }
+
+  if (!user.businessId) {
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-center max-w-md mx-auto">
+        <ShieldAlert className="h-12 w-12 text-amber-500 animate-bounce" />
+        <h3 className="text-xl font-bold">No Mess Associated</h3>
+        <p className="text-muted-foreground text-sm">
+          You are not associated with any mess yet. Please link a mess from your dashboard first to view the menu.
+        </p>
+      </div>
+    );
+  }
+
   const res = await getCustomerMenu();
 
   if (!res.success) {
@@ -131,24 +150,37 @@ export default async function CustomerMenuPage() {
         <CardContent className="pt-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {DAYS_OF_WEEK.map((day) => {
-              const entry = weeklyMenu.find(item => item.day === day);
+              const lunchEntry = weeklyMenu.find(item => item.day === day && item.mealType === "LUNCH");
+              const dinnerEntry = weeklyMenu.find(item => item.day === day && item.mealType === "DINNER");
+              const hasData = lunchEntry || dinnerEntry;
+
               return (
-                <div key={day} className={`rounded-xl border p-4 transition-all ${entry ? "bg-card shadow-sm border-indigo-100/50 hover:shadow-md" : "bg-muted/15 border-dashed border-2 flex flex-col justify-center items-center py-6"}`}>
-                  <div className="flex justify-between items-center mb-2">
+                <div key={day} className={`rounded-xl border p-4 transition-all ${hasData ? "bg-card shadow-sm border-indigo-100/50 hover:shadow-md" : "bg-muted/15 border-dashed border-2 flex flex-col justify-center items-center py-6"}`}>
+                  <div className="flex justify-between items-center mb-2.5">
                     <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       {day}
                     </span>
-                    {entry && (
+                    {hasData && (
                       <span className="inline-flex h-2.5 w-2.5 rounded-full bg-indigo-600" />
                     )}
                   </div>
                   
-                  {entry ? (
-                    <div className="space-y-1.5">
-                      <h4 className="font-bold text-sm text-foreground">{entry.title}</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {entry.description || "No items listed."}
-                      </p>
+                  {hasData ? (
+                    <div className="space-y-3.5 text-left">
+                      {lunchEntry && (
+                        <div className="space-y-1 border-b pb-2 last:border-b-0 last:pb-0">
+                          <span className="inline-block rounded-full bg-amber-50 px-2.5 py-0.5 text-[9px] font-bold text-amber-700 uppercase tracking-wider">Lunch</span>
+                          <h4 className="font-extrabold text-xs text-indigo-950 mt-1">{lunchEntry.title}</h4>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">{lunchEntry.description || "No details."}</p>
+                        </div>
+                      )}
+                      {dinnerEntry && (
+                        <div className="space-y-1">
+                          <span className="inline-block rounded-full bg-indigo-50 px-2.5 py-0.5 text-[9px] font-bold text-indigo-700 uppercase tracking-wider">Dinner</span>
+                          <h4 className="font-extrabold text-xs text-indigo-950 mt-1">{dinnerEntry.title}</h4>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed">{dinnerEntry.description || "No details."}</p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-3">

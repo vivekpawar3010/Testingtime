@@ -35,10 +35,11 @@ export async function saveMenuEntry(data) {
     });
     if (!business) throw new Error("Business not found");
 
-    // Upsert: check if a menu entry for this business, type, and day/date already exists
+    // Upsert: check if a menu entry for this business, type, day/date, and mealType already exists
     const queryWhere = {
       businessId: business.id,
       type: data.type,
+      mealType: data.mealType || null,
     };
     if (data.type === "FESTIVAL") {
       queryWhere.date = data.date ? new Date(data.date) : null;
@@ -57,7 +58,8 @@ export async function saveMenuEntry(data) {
         data: {
           title: data.title,
           description: data.description,
-          status: data.status || "ACTIVE"
+          status: data.status || "ACTIVE",
+          mealType: data.mealType || null
         }
       });
     } else {
@@ -67,6 +69,7 @@ export async function saveMenuEntry(data) {
           type: data.type,
           day: data.day || null,
           date: data.date ? new Date(data.date) : null,
+          mealType: data.mealType || null,
           title: data.title,
           description: data.description,
           status: "ACTIVE"

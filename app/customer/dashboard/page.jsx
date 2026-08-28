@@ -23,6 +23,29 @@ export default async function CustomerDashboardPage() {
   }
 
   const { data } = res;
+
+  if (data.notJoined) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center p-8 bg-white/80 backdrop-blur-md border border-neutral-100 rounded-3xl shadow-xl max-w-xl mx-auto space-y-6 py-16 mt-8">
+        <div className="h-16 w-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+          <Utensils className="h-8 w-8 animate-bounce" />
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-black text-indigo-950">Welcome, {data.userName}!</h2>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
+            Your profile has been created successfully. You are not linked to any food provider mess at the moment.
+          </p>
+        </div>
+        <div className="pt-2">
+          <Link href="/find-mess">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs h-11 px-8 rounded-2xl shadow-md">
+              Find & Join a Mess
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const activeSub = data.subscription;
   const remainingMeals = activeSub ? (activeSub.mealCount - activeSub.usedMeals) : 0;
   const totalMeals = activeSub ? activeSub.mealCount : 0;
@@ -34,6 +57,40 @@ export default async function CustomerDashboardPage() {
   // Check for unpaid bills
   const unpaidBills = data.bills.filter(b => b.status !== "PAID");
   const totalDueAmount = unpaidBills.reduce((sum, b) => sum + b.remainingAmount, 0);
+
+  // Check if today is a weekly off or a calendar holiday
+  const checkTodayHoliday = () => {
+    if (!data.holidays || data.holidays.length === 0) return null;
+    const today = new Date();
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const currentDayName = days[today.getDay()];
+    const todayStr = today.toDateString();
+
+    const specificHoliday = data.holidays.find(
+      h => h.date && new Date(h.date).toDateString() === todayStr
+    );
+    if (specificHoliday) {
+      return {
+        mealType: specificHoliday.mealType,
+        title: specificHoliday.title || "Holiday"
+      };
+    }
+
+    const weeklyOff = data.holidays.find(
+      h => h.dayOfWeek && h.dayOfWeek.toUpperCase() === currentDayName
+    );
+    if (weeklyOff) {
+      return {
+        mealType: weeklyOff.mealType,
+        title: weeklyOff.title || `${currentDayName} Off`
+      };
+    }
+
+    return null;
+  };
+
+  const todayHoliday = checkTodayHoliday();
+  const weeklyOffs = data.holidays?.filter(h => h.dayOfWeek) || [];
 
   return (
     <div className="space-y-8">
@@ -49,6 +106,17 @@ export default async function CustomerDashboardPage() {
           </div>
         )}
       </div>
+
+      {/* Holiday Notification Banner */}
+      {todayHoliday && (
+        <Alert variant="destructive" className="bg-rose-50 border-rose-200 text-rose-950 shadow-md">
+          <Calendar className="h-5 w-5 text-rose-600" />
+          <AlertTitle className="font-extrabold text-sm text-rose-900">Mess Holiday Alert</AlertTitle>
+          <AlertDescription className="text-xs mt-1 font-semibold leading-relaxed">
+            The mess has scheduled a holiday today for: <strong className="text-rose-600 underline uppercase">{todayHoliday.mealType === "ALL" ? "All Day" : todayHoliday.mealType}</strong> ({todayHoliday.title}).
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Active Dine Pass Banner */}
       {data.activeDinePass && (
@@ -170,6 +238,21 @@ export default async function CustomerDashboardPage() {
                 <div className="flex justify-between py-2.5">
                   <span className="text-muted-foreground">Dinner Period:</span>
                   <span className="font-semibold">{data.businessSettings?.dinnerStart || "16:00"} - {data.businessSettings?.dinnerEnd || "23:00"}</span>
+                </div>
+              )}
+              {weeklyOffs.length > 0 && (
+                <div className="py-3.5 space-y-2 border-t">
+                  <span className="text-muted-foreground font-bold block text-[10px] uppercase tracking-wider">Weekly Off Days:</span>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {weeklyOffs.map((off) => (
+                      <div key={off.id} className="flex justify-between items-center bg-rose-50/40 border border-rose-100/50 rounded-xl px-3 py-1.5 text-xs">
+                        <span className="font-extrabold text-rose-950 uppercase text-[10px]">{off.dayOfWeek}</span>
+                        <span className="font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full text-[9px] uppercase">
+                          {off.mealType === "ALL" ? "All Day" : off.mealType}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

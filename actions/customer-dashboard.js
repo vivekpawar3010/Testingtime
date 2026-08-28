@@ -7,7 +7,15 @@ export async function getCustomerDashboardData() {
   try {
     const user = await checkUser();
     if (!user || user.role !== "CUSTOMER") throw new Error("Unauthorized");
-    if (!user.businessId) throw new Error("Not linked to any mess");
+    if (!user.businessId) {
+      return {
+        success: true,
+        data: {
+          notJoined: true,
+          userName: user.name || user.email,
+        }
+      };
+    }
 
     const business = await db.business.findUnique({
       where: { id: user.businessId }
@@ -56,6 +64,11 @@ export async function getCustomerDashboardData() {
       }
     });
 
+    // Fetch holiday/off configurations
+    const holidays = await db.holiday.findMany({
+      where: { businessId: business.id }
+    });
+
     const latestLog = logs[0] || null;
     let activeDinePass = null;
     if (latestLog) {
@@ -87,6 +100,7 @@ export async function getCustomerDashboardData() {
         notifications,
         dailyMenu,
         activeDinePass,
+        holidays,
         businessSettings: {
           qrScanEnabled: business.qrScanEnabled,
           breakfastEnabled: business.breakfastEnabled,

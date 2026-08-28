@@ -13,7 +13,8 @@ import {
   QrCode,
   Menu,
   X,
-  Settings
+  Settings,
+  CalendarOff
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -26,6 +27,7 @@ const menuItems = [
   { label: "Subscriptions", href: "/dashboard/subscriptions", icon: CreditCard },
   { label: "Billing & Invoices", href: "/dashboard/billing", icon: Receipt },
   { label: "Menu Planner", href: "/dashboard/menu", icon: Utensils },
+  { label: "Holidays & Offs", href: "/dashboard/holidays", icon: CalendarOff },
   { label: "Meal Logs", href: "/dashboard/meals", icon: History },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
