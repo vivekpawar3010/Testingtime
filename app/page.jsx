@@ -74,6 +74,86 @@ const HomePage = async () => {
                    </div>
                  </div>
                </section>
+
+               {/* Search Optimization (SEO / GEO) Copy Section */}
+               <section className="py-20 bg-white border-t border-indigo-50 relative overflow-hidden font-sans">
+                 <div className="container mx-auto px-4 sm:px-8 max-w-5xl">
+                   <div className="grid gap-12 md:grid-cols-2 items-center">
+                     
+                     <div className="space-y-6 text-left">
+                       <span className="rounded-full bg-indigo-50 px-4 py-1.5 text-xs font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-600/20 uppercase tracking-wider">
+                         Find or Manage Messes
+                       </span>
+                       <h2 className="text-3xl sm:text-4xl font-extrabold text-indigo-950 tracking-tight leading-tight">
+                         The Ultimate Mess Locator & Dining ERP Solution
+                       </h2>
+                       <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                         Are you a student searching for home-cooked food? Or a mess owner looking to digitize your operations? MessFind bridges the gap with state-of-the-art tools.
+                       </p>
+                       
+                       <div className="space-y-4">
+                         <div className="flex gap-4">
+                           <div className="h-6 w-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 mt-1 font-bold text-xs">✓</div>
+                           <div>
+                             <h4 className="font-extrabold text-indigo-950 text-sm">Good Mess Finder for Customers</h4>
+                             <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                               Instantly locate the best dining mess options near your hostel or PG. Review active menus and plans before joining.
+                             </p>
+                           </div>
+                         </div>
+                         
+                         <div className="flex gap-4">
+                           <div className="h-6 w-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 mt-1 font-bold text-xs">✓</div>
+                           <div>
+                             <h4 className="font-extrabold text-indigo-950 text-sm">Overall Management for Mess Owners</h4>
+                             <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                               A full-featured console to track diner subscriptions, register new customers, auto-generate invoices, and log thali meals via QR scanning.
+                             </p>
+                           </div>
+                         </div>
+
+                         <div className="flex gap-4">
+                           <div className="h-6 w-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0 mt-1 font-bold text-xs">✓</div>
+                           <div>
+                             <h4 className="font-extrabold text-indigo-950 text-sm">Easy Location & Budget Filters</h4>
+                             <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                               Find a mess that fits your pocket. Filter by budget plans, daily thali prices, and local area addresses seamlessly.
+                             </p>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+
+                     <div className="bg-slate-50 border rounded-3xl p-8 space-y-6 text-left shadow-sm">
+                       <h3 className="font-extrabold text-indigo-950 text-lg">Frequently Asked Questions</h3>
+                       
+                       <div className="space-y-4 divide-y">
+                         <div className="space-y-1 pt-3 first:pt-0">
+                           <h4 className="font-bold text-sm text-indigo-900">How do I find a good daily food mess near me?</h4>
+                           <p className="text-xs text-muted-foreground leading-relaxed">
+                             Our public directory tool indexes verified hostel and PG messes. You can filter dining services based on budget, distance, active menu preferences, and ratings.
+                           </p>
+                         </div>
+
+                         <div className="space-y-1 pt-3">
+                           <h4 className="font-bold text-sm text-indigo-900">How does the QR check-in meal scanner work?</h4>
+                           <p className="text-xs text-muted-foreground leading-relaxed">
+                             Once subscribed, customers generate a secure dine pass. Owners scan this pass at the counter to automatically deduct a meal and maintain transparent digital logs.
+                           </p>
+                         </div>
+
+                         <div className="space-y-1 pt-3">
+                           <h4 className="font-bold text-sm text-indigo-900">Can mess coordinators schedule holidays or weekly offs?</h4>
+                           <p className="text-xs text-muted-foreground leading-relaxed">
+                             Yes. Mess coordinators can configure weekly offs (e.g., Sunday night closed) or specific calendar holidays. Alerts replicate instantly to client cards and diner dashboards.
+                           </p>
+                         </div>
+                       </div>
+                     </div>
+
+                   </div>
+                 </div>
+               </section>
             </main>
             <Footer />
         </div>

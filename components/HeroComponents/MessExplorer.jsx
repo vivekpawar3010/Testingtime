@@ -31,7 +31,10 @@ export default function MessExplorer({ initialBusinesses }) {
       } else if (type === "menu") {
         const res = await getBusinessDailyMenuByUniqueId(mess.uniqueId);
         if (res.success) {
-          setMenu(res.dailyMenu);
+          setMenu({
+            dailyMenu: res.dailyMenu,
+            weeklyToday: res.weeklyToday
+          });
         }
       }
     } catch (err) {
@@ -249,24 +252,41 @@ export default function MessExplorer({ initialBusinesses }) {
                 </div>
               )
             ) : (
-              !menu ? (
+              (!menu?.dailyMenu && (!menu?.weeklyToday || menu.weeklyToday.length === 0)) ? (
                 <div className="text-center py-8 text-xs text-muted-foreground">
                   Today's menu hasn't been posted by this mess yet.
                 </div>
               ) : (
-                <div className="rounded-2xl border bg-slate-50/50 p-4 space-y-4">
-                  <div>
-                    <h4 className="font-extrabold text-sm text-indigo-950 uppercase tracking-wider">{menu.title}</h4>
-                    {menu.date && (
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Date: {new Date(menu.date).toLocaleDateString()}</p>
-                    )}
-                  </div>
-                  {menu.description ? (
-                    <div className="bg-white rounded-xl p-3 border border-slate-100 text-xs text-indigo-900 font-medium whitespace-pre-wrap leading-relaxed">
-                      {menu.description}
+                <div className="space-y-4">
+                  {/* Today's Special Broadcast */}
+                  {menu?.dailyMenu && (
+                    <div className="rounded-2xl border border-orange-100 bg-orange-50/20 p-4 space-y-2 text-left">
+                      <span className="inline-block rounded-full bg-orange-100 px-2.5 py-0.5 text-[9px] font-bold text-orange-800 uppercase tracking-wider">Today's Special Feast</span>
+                      <div>
+                        <h4 className="font-extrabold text-sm text-indigo-950">{menu.dailyMenu.title}</h4>
+                        {menu.dailyMenu.description && (
+                          <p className="text-xs text-neutral-600 mt-1.5 leading-relaxed whitespace-pre-wrap">{menu.dailyMenu.description}</p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic">No menu details provided.</p>
+                  )}
+
+                  {/* Today's Weekly Dine Plan (Lunch and Dinner) */}
+                  {menu?.weeklyToday && menu.weeklyToday.length > 0 && (
+                    <div className="rounded-2xl border border-indigo-100 bg-indigo-50/5 p-4 space-y-3 text-left">
+                      <span className="inline-block rounded-full bg-indigo-100 px-2.5 py-0.5 text-[9px] font-bold text-indigo-800 uppercase tracking-wider">Today's Regular Menu</span>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {menu.weeklyToday.map((item) => (
+                          <div key={item.id} className="rounded-xl border bg-white p-3 space-y-1">
+                            <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${item.mealType === 'LUNCH' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-700'}`}>
+                              {item.mealType}
+                            </span>
+                            <h4 className="font-bold text-xs text-indigo-950 mt-1">{item.title}</h4>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">{item.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               )

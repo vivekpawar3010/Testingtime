@@ -152,7 +152,21 @@ export async function getBusinessDailyMenuByUniqueId(uniqueId) {
       }
     });
 
-    return { success: true, dailyMenu };
+    const today = new Date();
+    const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
+    const currentDayName = days[today.getDay()];
+
+    const weeklyToday = await db.menu.findMany({
+      where: {
+        businessId: business.id,
+        type: "WEEKLY",
+        day: currentDayName,
+        status: "ACTIVE"
+      },
+      orderBy: { mealType: "asc" }
+    });
+
+    return { success: true, dailyMenu, weeklyToday };
   } catch (error) {
     return { success: false, error: error.message };
   }
