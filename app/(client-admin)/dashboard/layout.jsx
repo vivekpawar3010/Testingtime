@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   Settings,
-  CalendarOff
+  CalendarOff,
+  Store
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -23,6 +24,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 const menuItems = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Scanner Console", href: "/dashboard/scanner", icon: QrCode, highlight: true },
+  { label: "Mess Profile", href: "/dashboard/settings#profile", icon: Store },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Subscriptions", href: "/dashboard/subscriptions", icon: CreditCard },
   { label: "Billing & Invoices", href: "/dashboard/billing", icon: Receipt },
@@ -49,10 +51,10 @@ export default function DashboardLayout({ children }) {
               <nav className="space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || (item.href.includes("#") && pathname === item.href.split("#")[0]);
                   return (
                     <Link
-                      key={item.href}
+                      key={item.label}
                       href={item.href}
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-all duration-200",
@@ -89,10 +91,10 @@ export default function DashboardLayout({ children }) {
               <nav className="space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon;
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || (item.href.includes("#") && pathname === item.href.split("#")[0]);
                   return (
                     <Link
-                      key={item.href}
+                      key={item.label}
                       href={item.href}
                       onClick={() => setOpen(false)}
                       className={cn(

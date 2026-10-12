@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { SignInButton } from '@clerk/nextjs';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { GuideTriggerButton } from '@/components/FirstTimeGuideModal';
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -65,13 +66,20 @@ const MobileNav = ({ isLoggedIn, showFindMess = true }) => {
             })}
           </nav>
 
-          <div className="mt-8 px-4 sm:hidden">
-            {!isLoggedIn && (
+          <div className="mt-8 px-4 flex flex-col gap-3 sm:hidden">
+            <GuideTriggerButton className="w-full justify-center" />
+            {!isLoggedIn ? (
               <SignInButton mode="modal">
                 <Button className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md" size="lg">
                   Sign In
                 </Button>
               </SignInButton>
+            ) : (
+              <Link href="/login-redirect" onClick={() => setIsOpen(false)}>
+                <Button className="w-full rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md" size="lg">
+                  Dashboard
+                </Button>
+              </Link>
             )}
           </div>
         </div>

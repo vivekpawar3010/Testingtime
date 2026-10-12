@@ -52,6 +52,16 @@ export async function approveCustomerRegistration(customerId) {
       data: { status: "ACTIVE" }
     });
 
+    // Update pending subscription requests for this customer to APPROVED
+    await db.subscriptionRequest.updateMany({
+      where: {
+        userId: customerId,
+        businessId: business.id,
+        status: "PENDING"
+      },
+      data: { status: "APPROVED" }
+    });
+
     // 2. Create welcome notification
     await db.notification.create({
       data: {
@@ -64,6 +74,7 @@ export async function approveCustomerRegistration(customerId) {
 
     revalidatePath("/dashboard/customers");
     revalidatePath("/dashboard");
+    revalidatePath("/customer/dashboard");
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -75,6 +86,10 @@ export async function rejectCustomerRegistration(customerId) {
     const user = await checkUser();
     if (!user || user.role !== "CLIENT_ADMIN") throw new Error("Unauthorized");
 
+    const business = await db.business.findUnique({
+      where: { ownerId: user.id }
+    });
+
     // Unlink the user and set status back to PENDING so they can resubmit
     await db.user.update({
       where: { id: customerId },
@@ -85,8 +100,21 @@ export async function rejectCustomerRegistration(customerId) {
       }
     });
 
+    // Update pending subscription requests to REJECTED
+    if (business) {
+      await db.subscriptionRequest.updateMany({
+        where: {
+          userId: customerId,
+          businessId: business.id,
+          status: "PENDING"
+        },
+        data: { status: "REJECTED" }
+      });
+    }
+
     revalidatePath("/dashboard/customers");
     revalidatePath("/dashboard");
+    revalidatePath("/customer/dashboard");
     return { success: true };
   } catch (error) {
     return { success: false, error: error.message };
@@ -261,6 +289,53 @@ export async function manuallyAddCustomer(customerData, subData) {
     revalidatePath("/dashboard/customers");
     revalidatePath("/dashboard");
     return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function convertCustomerAbsentMeals(customerId, daysToConvert, note) {
+  try {
+    const user = await checkUser();
+    if (!user || user.role !== "CLIENT_ADMIN") throw new Error("Unauthorized");
+
+    const business = await db.business.findUnique({
+      where: { ownerId: user.id }
+    });
+    if (!business) throw new Error("Business profile not found");
+
+    const activeSub = await db.subscription.findFirst({
+      where: { userId: customerId, businessId: business.id, status: "ACTIVE" },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!activeSub) throw new Error("No active subscription found for this diner.");
+
+    const count = parseInt(daysToConvert);
+    if (isNaN(count) || count <= 0) throw new Error("Please enter a valid meal count to convert.");
+
+    // Add meals to mealCount so remaining meals increase
+    await db.subscription.update({
+      where: { id: activeSub.id },
+      data: {
+        mealCount: activeSub.mealCount + count
+      }
+    });
+
+    // Notify customer
+    await db.notification.create({
+      data: {
+        userId: customerId,
+        type: "SYSTEM",
+        message: `${business.name} credited ${count} absent meal(s) back into your subscription! Reason: ${note || "Leave / holiday compensation"}.`,
+        status: "UNREAD"
+      }
+    });
+
+    revalidatePath("/dashboard/customers");
+    revalidatePath("/dashboard");
+    revalidatePath("/customer/dashboard");
+    return { success: true, newMealCount: activeSub.mealCount + count };
   } catch (error) {
     return { success: false, error: error.message };
   }

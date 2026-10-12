@@ -27,9 +27,7 @@ export default async function CustomerLayout({ children }) {
     }
   }
 
-  if (user.status === "PENDING" && user.businessId) {
-    redirect("/pending-approval");
-  }
+  // Customers with pending status or requests can freely browse their dashboard, explore messes, and view their request statuses.
 
   const navItems = [
     { label: "My Dashboard", href: "/customer/dashboard", icon: LayoutDashboard },

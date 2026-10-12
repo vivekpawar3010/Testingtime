@@ -56,6 +56,9 @@ export async function updateBusinessSettings(data) {
 
     revalidatePath("/dashboard/settings");
     revalidatePath("/dashboard/scanner");
+    revalidatePath("/find-mess");
+    revalidatePath("/customer/dashboard");
+    revalidatePath("/");
     return { success: true, business: updated };
   } catch (error) {
     return { success: false, error: error.message };

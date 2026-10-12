@@ -17,6 +17,8 @@ const getTodayKolkataString = () => {
   }).format(new Date());
 };
 
+export const dynamic = "force-dynamic";
+
 export default function AdminQRConsolePage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);

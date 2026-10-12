@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Utensils, CalendarDays, ShieldAlert, Award, Sparkles } from "lucide-react";
 import { checkUser } from "@/lib/checkUser";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 const DAYS_OF_WEEK = [
   "MONDAY",
@@ -25,11 +27,16 @@ export default async function CustomerMenuPage() {
   if (!user.businessId) {
     return (
       <div className="flex h-[50vh] flex-col items-center justify-center gap-4 text-center max-w-md mx-auto">
-        <ShieldAlert className="h-12 w-12 text-amber-500 animate-bounce" />
-        <h3 className="text-xl font-bold">No Mess Associated</h3>
+        <ShieldAlert className="h-12 w-12 text-indigo-500 animate-bounce" />
+        <h3 className="text-xl font-bold">No Active Mess Associated</h3>
         <p className="text-muted-foreground text-sm">
-          You are not associated with any mess yet. Please link a mess from your dashboard first to view the menu.
+          You are not associated with an active mess yet. Explore messes across Pune and check their daily special menus.
         </p>
+        <Link href="/customer/dashboard">
+          <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md">
+            Browse Messes in Pune
+          </Button>
+        </Link>
       </div>
     );
   }

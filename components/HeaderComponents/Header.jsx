@@ -4,7 +4,7 @@ import DesktopNav from './DesktopNav';
 import MobileNav from './MobileNav';
 import { Button } from '@/components/ui/button';
 import { SignInButton, UserButton } from '@clerk/nextjs';
-import { checkUser } from '@/lib/checkUser';
+import { GuideTriggerButton } from '@/components/FirstTimeGuideModal';
 
 const Header = async ({ user: propUser }) => {
   const user = propUser || await checkUser();
@@ -25,6 +25,7 @@ const Header = async ({ user: propUser }) => {
         </div>
 
         <div className="flex items-center gap-3">
+          <GuideTriggerButton className="hidden sm:inline-flex" />
           {user ? (
             <>
               <Link href="/login-redirect">

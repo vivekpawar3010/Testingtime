@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 export const dynamic = "force-dynamic";
 
 import DashboardDateFilter from "./DashboardDateFilter";
+import { GuideTriggerButton } from "@/components/FirstTimeGuideModal";
 
 export default async function DashboardPage({ searchParams }) {
   const params = await searchParams;
@@ -37,6 +38,7 @@ export default async function DashboardPage({ searchParams }) {
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <DashboardDateFilter initialDate={stats.filteredDate} />
+          <GuideTriggerButton label="Owner Guide" className="bg-white/10 hover:bg-white/20 text-white border-white/20" />
           <Link href="/dashboard/scanner">
             <Button className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold rounded-full px-5 h-10 w-full sm:w-auto cursor-pointer border-none shadow-md">
               Launch Scanner Console

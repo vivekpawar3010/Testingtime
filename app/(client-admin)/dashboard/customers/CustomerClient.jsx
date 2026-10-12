@@ -7,7 +7,8 @@ import {
   suspendCustomer, 
   activateCustomer, 
   deleteCustomer,
-  manuallyAddCustomer 
+  manuallyAddCustomer,
+  convertCustomerAbsentMeals
 } from "@/actions/customers";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -16,13 +17,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Check, X, ShieldAlert, UserMinus, ToggleLeft, ToggleRight, UserCheck, Plus, CheckCircle2 } from "lucide-react";
+import { Check, X, ShieldAlert, UserMinus, ToggleLeft, ToggleRight, UserCheck, Plus, CheckCircle2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CustomerClient({ initialCustomers, plans = [] }) {
   const [customers, setCustomers] = useState(initialCustomers);
   const [activeTab, setActiveTab] = useState("active");
   const [loading, setLoading] = useState(false);
+
+  // Convert Absent Meals Modal States
+  const [convertCustomer, setConvertCustomer] = useState(null);
+  const [convertMealsCount, setConvertMealsCount] = useState(1);
+  const [convertReason, setConvertReason] = useState("Leave / holiday adjustment");
+  const [convertLoading, setConvertLoading] = useState(false);
 
   // Approval Modal States
   const [selectedApprovee, setSelectedApprovee] = useState(null);
@@ -236,6 +243,26 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
     }
   };
 
+  const handleConvertAbsentMeals = async (e) => {
+    e.preventDefault();
+    if (!convertCustomer) return;
+    setConvertLoading(true);
+    try {
+      const res = await convertCustomerAbsentMeals(convertCustomer.id, convertMealsCount, convertReason);
+      if (res.success) {
+        toast.success(`Successfully converted ${convertMealsCount} absent meal(s) into active balance for ${convertCustomer.name}!`);
+        setConvertCustomer(null);
+        window.location.reload();
+      } else {
+        toast.error(res.error || "Failed to convert absent meals.");
+      }
+    } catch (err) {
+      toast.error("Error converting absent meals.");
+    } finally {
+      setConvertLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -348,6 +375,21 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
                               )}
                             </TableCell>
                             <TableCell className="text-right space-x-2">
+                              {activeSub && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs"
+                                  onClick={() => {
+                                    setConvertCustomer(cust);
+                                    setConvertMealsCount(1);
+                                    setConvertReason("Leave / holiday adjustment");
+                                  }}
+                                  disabled={loading}
+                                >
+                                  <RotateCcw className="h-3 w-3 mr-1" /> Convert Absent
+                                </Button>
+                              )}
                               <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -730,6 +772,77 @@ export default function CustomerClient({ initialCustomers, plans = [] }) {
               {loading ? "Approving..." : "Yes, Approve"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* CONVERT ABSENT MEALS DIALOG MODAL */}
+      <Dialog open={convertCustomer !== null} onOpenChange={(open) => !open && setConvertCustomer(null)}>
+        <DialogContent className="sm:max-w-md rounded-3xl p-6 bg-white">
+          <DialogHeader>
+            <div className="flex items-center gap-2 text-indigo-600 font-bold text-sm">
+              <RotateCcw className="h-4 w-4" /> Convert Absent Meals
+            </div>
+            <DialogTitle className="text-xl font-bold text-indigo-950">
+              Credit Meals for {convertCustomer?.name}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Convert missed / absent operating days back into the diner's active meal balance.
+            </DialogDescription>
+          </DialogHeader>
+
+          {convertCustomer && (
+            <form onSubmit={handleConvertAbsentMeals} className="space-y-4 py-2">
+              <div className="p-3 bg-indigo-50/50 rounded-2xl border text-xs space-y-1">
+                <span className="font-semibold text-indigo-950 block">Current Subscription Details:</span>
+                <p className="text-muted-foreground text-[11px]">
+                  Total Meals: <strong>{convertCustomer.subscriptions?.[0]?.mealCount || 0}</strong> • Used/Scanned: <strong>{convertCustomer.subscriptions?.[0]?.usedMeals || 0}</strong> • Available: <strong>{Math.max(0, (convertCustomer.subscriptions?.[0]?.mealCount || 0) - (convertCustomer.subscriptions?.[0]?.usedMeals || 0))} thalis</strong>
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="convert-count" className="text-xs font-bold text-muted-foreground uppercase">
+                  Number of Absent Meals / Days to Credit
+                </Label>
+                <Input
+                  id="convert-count"
+                  type="number"
+                  min="1"
+                  max="60"
+                  required
+                  value={convertMealsCount}
+                  onChange={(e) => setConvertMealsCount(parseInt(e.target.value) || 1)}
+                  className="rounded-xl border-neutral-200"
+                />
+                <span className="text-[10px] text-muted-foreground">
+                  This will increase the diner's remaining balance by {convertMealsCount} meal(s).
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="convert-reason" className="text-xs font-bold text-muted-foreground uppercase">
+                  Reason / Adjustment Note
+                </Label>
+                <Input
+                  id="convert-reason"
+                  type="text"
+                  required
+                  value={convertReason}
+                  onChange={(e) => setConvertReason(e.target.value)}
+                  placeholder="e.g. Vacation leave, Exam leave, Missed holiday credit"
+                  className="rounded-xl border-neutral-200"
+                />
+              </div>
+
+              <DialogFooter className="pt-3 gap-2">
+                <Button variant="outline" type="button" onClick={() => setConvertCustomer(null)} disabled={convertLoading} className="rounded-xl text-xs font-bold">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={convertLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-md">
+                  {convertLoading ? "Crediting..." : `Credit +${convertMealsCount} Meals`}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>

@@ -7,11 +7,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Settings, Save, Clock, QrCode, Receipt, Store, Info, CheckCircle2 } from "lucide-react";
+import { 
+  Settings, 
+  Save, 
+  Clock, 
+  QrCode, 
+  Receipt, 
+  Store, 
+  Info, 
+  CheckCircle2, 
+  Eye, 
+  MapPin, 
+  Phone, 
+  Utensils, 
+  Sparkles,
+  ExternalLink
+} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export default function SettingsClient({ initialSettings }) {
   const [loading, setLoading] = useState(false);
   const [settings, setSettings] = useState(initialSettings);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -108,12 +125,25 @@ export default function SettingsClient({ initialSettings }) {
       <form onSubmit={handleSubmit} className="space-y-8">
         
         {/* Profile Settings */}
-        <Card className="shadow-md border border-indigo-100">
+        <Card className="shadow-md border border-indigo-100" id="profile">
           <CardHeader className="bg-indigo-50/30 border-b pb-4">
-            <CardTitle className="text-md font-bold text-indigo-950 flex items-center gap-2">
-              <Store className="h-4 w-4 text-indigo-600" /> Mess Profile Settings
-            </CardTitle>
-            <CardDescription>Update your public identity details and contact information.</CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <CardTitle className="text-md font-bold text-indigo-950 flex items-center gap-2">
+                  <Store className="h-4 w-4 text-indigo-600" /> Mess Profile Settings
+                </CardTitle>
+                <CardDescription>Update your public identity details, contact info, and Pune address.</CardDescription>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setPreviewOpen(true)}
+                className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 font-bold text-xs gap-1.5 self-start sm:self-auto rounded-xl shadow-xs"
+              >
+                <Eye className="h-3.5 w-3.5" /> Preview Public Diner Profile
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -219,6 +249,56 @@ export default function SettingsClient({ initialSettings }) {
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Live Profile Quick Summary Preview */}
+            <div className="md:col-span-2 pt-4 border-t space-y-3">
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-indigo-600" /> Live Search Card Preview (How Diners See Your Mess in Pune)
+              </span>
+              <div className="p-4 rounded-2xl border bg-gradient-to-br from-indigo-50/40 via-white to-blue-50/30 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3.5">
+                  {settings.logoUrl ? (
+                    <img 
+                      src={settings.logoUrl} 
+                      alt="Logo" 
+                      className="h-14 w-14 rounded-2xl object-cover border bg-white shadow-xs shrink-0" 
+                    />
+                  ) : (
+                    <div className="h-14 w-14 rounded-2xl bg-indigo-600 text-white font-black text-xl flex items-center justify-center shadow-xs shrink-0">
+                      {settings.name?.charAt(0) || "M"}
+                    </div>
+                  )}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="font-extrabold text-base text-neutral-900">{settings.name || "Mess Name"}</h4>
+                      <span className="font-mono text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                        {settings.uniqueId || "MESS-ID"}
+                      </span>
+                      <span className="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        ● Verified Mess
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-indigo-500 shrink-0" />
+                      {settings.address || "Address / Locality in Pune"}
+                    </p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-indigo-500 shrink-0" />
+                      {settings.phone || "Phone number"}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPreviewOpen(true)}
+                  className="rounded-xl border-indigo-200 text-indigo-700 font-bold text-xs gap-1 hover:bg-indigo-50 shrink-0"
+                >
+                  <Eye className="h-3 w-3" /> View Full Profile Modal
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -521,6 +601,97 @@ export default function SettingsClient({ initialSettings }) {
         </div>
 
       </form>
+
+      {/* Full Mess Profile Modal Preview */}
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-6">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              {settings.logoUrl ? (
+                <img src={settings.logoUrl} alt="Logo" className="h-14 w-14 rounded-2xl object-cover border bg-white shadow-xs shrink-0" />
+              ) : (
+                <div className="h-14 w-14 rounded-2xl bg-indigo-600 text-white font-black text-xl flex items-center justify-center shrink-0">
+                  {settings.name?.charAt(0) || "M"}
+                </div>
+              )}
+              <div className="space-y-0.5">
+                <DialogTitle className="text-xl font-black text-neutral-900 flex items-center gap-2">
+                  {settings.name || "Mess Name"}
+                  <span className="font-mono text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full">
+                    {settings.uniqueId || "MESS-ID"}
+                  </span>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Public profile preview — exactly what diners in Pune see when viewing your mess profile in the explorer.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Address & Contact */}
+            <div className="p-4 bg-neutral-50 rounded-2xl border space-y-2">
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold text-neutral-800 block text-xs">Mess Location & Address:</span>
+                  <span className="text-muted-foreground">{settings.address || "Address not provided yet"}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <Phone className="h-4 w-4 text-indigo-600 shrink-0" />
+                <div>
+                  <span className="font-bold text-neutral-800 text-xs">Contact Phone: </span>
+                  <span className="text-muted-foreground">{settings.phone || "N/A"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Timings */}
+            <div className="space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-indigo-600" /> Operational Hours
+              </h4>
+              <div className="grid gap-2 sm:grid-cols-3">
+                <div className={`p-3 rounded-2xl border text-center ${settings.breakfastEnabled ? "bg-amber-50/50 border-amber-200" : "bg-neutral-50 border-neutral-200 opacity-60"}`}>
+                  <span className="font-extrabold block text-xs text-neutral-800">Breakfast</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">
+                    {settings.breakfastEnabled ? `${settings.breakfastStart} - ${settings.breakfastEnd}` : "Closed"}
+                  </span>
+                </div>
+                <div className={`p-3 rounded-2xl border text-center ${settings.lunchEnabled ? "bg-emerald-50/50 border-emerald-200" : "bg-neutral-50 border-neutral-200 opacity-60"}`}>
+                  <span className="font-extrabold block text-xs text-neutral-800">Lunch</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">
+                    {settings.lunchEnabled ? `${settings.lunchStart} - ${settings.lunchEnd}` : "Closed"}
+                  </span>
+                </div>
+                <div className={`p-3 rounded-2xl border text-center ${settings.dinnerEnabled ? "bg-indigo-50/50 border-indigo-200" : "bg-neutral-50 border-neutral-200 opacity-60"}`}>
+                  <span className="font-extrabold block text-xs text-neutral-800">Dinner</span>
+                  <span className="text-[11px] text-muted-foreground font-semibold">
+                    {settings.dinnerEnabled ? `${settings.dinnerStart} - ${settings.dinnerEnd}` : "Closed"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* QR Scan Status */}
+            <div className="p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-100 flex items-center justify-between">
+              <span className="font-semibold text-indigo-950 flex items-center gap-2">
+                <QrCode className="h-4 w-4 text-indigo-600" /> Counter QR Scanner Status
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${settings.qrScanEnabled ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"}`}>
+                {settings.qrScanEnabled ? "● ACTIVE FOR CHECK-INS" : "● TEMPORARILY DISABLED"}
+              </span>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button type="button" onClick={() => setPreviewOpen(false)} className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs">
+                Close Preview
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
