@@ -9,16 +9,31 @@ import Footer from '@/components/Footer'
 export const dynamic = "force-dynamic";
 
 const HomePage = async () => {
-    const user = await checkUser();
-    
-    // Fetch dynamic joins counts directly from database
-    const approvedMessesCount = await db.business.count({
-        where: { status: "APPROVED" }
-    });
-    
-    const customerCount = await db.user.count({
-        where: { role: "CUSTOMER" }
-    });
+    let user = null;
+    let approvedMessesCount = 0;
+    let customerCount = 0;
+
+    try {
+        user = await checkUser();
+    } catch (e) {
+        console.error("Home page checkUser error:", e);
+    }
+
+    try {
+        approvedMessesCount = await db.business.count({
+            where: { status: "APPROVED" }
+        });
+    } catch (e) {
+        console.error("Home page business.count error:", e);
+    }
+
+    try {
+        customerCount = await db.user.count({
+            where: { role: "CUSTOMER" }
+        });
+    } catch (e) {
+        console.error("Home page user.count error:", e);
+    }
     
     return (
         <div className="flex flex-col min-h-screen">
